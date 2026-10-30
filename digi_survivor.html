@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<title>DigiSurvivor - Pixel Arena</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101827;color:#f4f7ff;font-family:system-ui,-apple-system,sans-serif;touch-action:none}
+#wrap{height:100dvh;display:flex;flex-direction:column;max-width:900px;margin:auto;background:#101827}
+header{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#18243a;border-bottom:2px solid #2d3c59;font-weight:800;letter-spacing:.4px}
+header small{font-size:11px;color:#9fb3d5;font-weight:600}
+#hud{padding:8px 12px 6px;background:#172238}
+.row{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;margin-bottom:5px}
+.bar{height:10px;border:2px solid #52627d;background:#27344b;border-radius:8px;overflow:hidden}
+#hpFill{height:100%;width:100%;background:#e85b68}#xpFill{height:100%;width:0;background:#56d5d0}
+#game{display:block;width:100%;flex:1;min-height:0;background:#243b36;image-rendering:pixelated}
+#bottom{height:60px;background:#18243a;display:flex;align-items:center;justify-content:space-around;font-size:11px;color:#bdcbe0}
+.pill{border:1px solid #52627d;border-radius:12px;padding:6px 10px}
+.overlay{position:fixed;inset:0;background:#08111ddd;display:flex;align-items:center;justify-content:center;padding:18px;z-index:5}
+.panel{width:min(480px,100%);max-height:94dvh;overflow-y:auto;background:#1b2942;border:2px solid #607397;border-radius:18px;padding:20px;box-shadow:0 12px 50px #0009;text-align:center}
+h1{font-size:25px;margin:2px 0 6px;color:#ffe28a}h2{font-size:20px;margin:4px 0 10px}p{color:#c3d0e6;font-size:13px;line-height:1.5}
+button{font:inherit;color:#f7f9ff;background:#344b70;border:2px solid #7188ad;border-radius:12px;padding:11px 14px;font-weight:800}
+button:active{transform:scale(.97)}.primary{background:#d17a35;border-color:#ffc16e;color:#1c1a18;width:100%;margin-top:12px}
+.choices{display:grid;grid-template-columns:1fr;gap:9px;margin-top:12px}.choices button{text-align:left;background:#263a59}
+.chargrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0;max-height:25vh;overflow-y:auto;padding:2px}.char.locked{opacity:.48;filter:grayscale(.85)}.char small{display:block;font-size:9px;color:#c4d4ea;font-weight:500;margin-top:3px}
+.char{padding:10px 4px;font-size:12px}.char.selected{border-color:#ffe28a;background:#5a4b32}
+.stage-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;max-height:25vh;overflow:auto;margin:10px 0}.stage-card{padding:9px 7px;text-align:left;font-size:11px;background:#263a59}.stage-card b{display:block;font-size:12px}.stage-card small{display:block;color:#c4d4ea;font-weight:500;margin-top:3px}.stage-card.selected{border-color:#ffe28a;background:#5a4b32}.stage-card:disabled{opacity:.35}.stage-note{font-size:11px;color:#a9bddc;margin:2px 0}
+.hidden{display:none!important}.evoChoices{display:grid;grid-template-columns:1fr;gap:8px;margin-top:12px}.evoChoices button{background:#263a59;text-align:left}.evoChoices small{display:block;color:#c4d4ea;font-weight:500;margin-top:3px}
+#evoName{color:#ffe28a}#typeHint{color:#9eeeff;font-size:10px}
+#stick{position:fixed;left:22px;bottom:82px;width:116px;height:116px;border-radius:50%;background:#d8e7ff20;border:2px solid #d8e7ff70;z-index:3;touch-action:none}
+#nub{position:absolute;left:35px;top:35px;width:42px;height:42px;border-radius:50%;background:#e8f2ff99;border:2px solid #fff}
+#special{position:fixed;right:22px;bottom:96px;width:74px;height:74px;border-radius:50%;background:#a34b37;border:3px solid #ffc17c;z-index:3;font-size:11px}
+@media(min-width:700px){#stick{left:calc(50% - 390px);bottom:90px}#special{right:calc(50% - 390px)}}
+</style>
+</head>
+<body>
+<div id="wrap">
+<header><div>DIGI<span style="color:#ffd36d">SURVIVOR</span> <small>PIXEL ARENA</small></div><small id="modeLabel">BETA 0.6 · MOBILE</small></header>
+<div id="hud">
+ <div class="row"><span id="charName">아구몬 Lv.1</span><span id="stats">처치 0 · 00:00</span></div>
+ <div class="row" style="margin:0 0 5px"><span id="evoName">성장기 · 백신</span><span id="typeHint">상성: 유리/불리 표시</span></div>
+ <div class="bar"><div id="hpFill"></div></div>
+ <div class="row" style="margin:5px 0 3px"><span>HP</span><span id="hpText">100 / 100</span></div>
+ <div class="bar"><div id="xpFill"></div></div>
+ <div class="row" style="margin:4px 0 0"><span>EXP</span><span id="xpText">0 / 5</span></div>
+</div>
+<canvas id="game"></canvas>
+<div id="bottom"><span class="pill">자동 공격</span><span class="pill">속성 상성</span><span class="pill" id="coinText">디지코어 0</span></div>
+</div>
+<div id="stick"><div id="nub"></div></div><button id="special">필살기<br>충전 0%</button>
+<div class="overlay" id="start">
+ <div class="panel">
+  <h1>DIGI SURVIVOR</h1><p>디지몬과 함께 몰려오는 적을 물리치고 살아남아라!<br>진화 분기와 백신·데이터·바이러스 상성을 활용해봐.</p>
+  <div id="charGrid" class="chargrid"></div>
+  <p id="rosterCount" class="stage-note">해금 3 / 15 · 잠금 12</p>
+  <p id="charDesc">균형 잡힌 기본형 · 꼬리 불꽃 공격</p>
+  <p class="stage-note">도전할 스테이지를 선택해. 보스를 격파하면 다음 지역이 해금돼.</p><div id="stageList" class="stage-grid"></div>
+  <button class="primary" id="startBtn">모험 시작</button><button style="width:100%;margin-top:8px" id="achievementBtn">🏆 업적 및 캐릭터 해금</button><button style="width:100%;margin-top:8px" id="codexBtn">📖 디지몬 도감</button>
+  <p style="font-size:11px">상성: 백신→바이러스→데이터→백신 · 조그레스는 파트너 조건 필요 · 초궁극체급 일부는 게임 오리지널.</p><p style="font-size:11px">기록과 영구 강화는 이 기기의 브라우저에 저장돼.</p>
+ </div>
+</div>
+<div class="overlay hidden" id="achievements"><div class="panel"><h2>업적 & 캐릭터 해금</h2><p id="achievementSummary"></p><div id="achievementList" class="choices" style="max-height:55vh;overflow:auto"></div><button class="primary" id="achievementClose">닫기</button></div></div>\n<div class="overlay hidden" id="codex"><div class="panel"><h2>디지몬 도감</h2><p>플레이 중 만난 진화 형태와 속성을 확인해.</p><div id="codexList" class="choices" style="max-height:48vh;overflow:auto"></div><button class="primary" id="codexClose">닫기</button></div></div>
+<div class="overlay hidden" id="levelup"><div class="panel"><h2>LEVEL UP!</h2><p>새로운 능력을 선택해.</p><div class="choices" id="upgradeChoices"></div></div></div>
+<div class="overlay hidden" id="evolution"><div class="panel"><h1>진화 선택!</h1><p id="evoDesc">전투 기록과 디지바이스 진화 경로를 바탕으로 다음 형태를 선택해.</p><div class="evoChoices" id="evoChoices"></div></div></div>
+<div class="overlay hidden" id="stageclear"><div class="panel"><h1 id="clearTitle">STAGE CLEAR!</h1><p id="clearText"></p><button class="primary" id="nextStageBtn">다음 스테이지</button><button style="width:100%;margin-top:8px" id="stageSelectBtn">스테이지 선택으로</button></div></div>
+<div class="overlay hidden" id="gameover"><div class="panel"><h1>GAME OVER</h1><p id="resultText"></p><button class="primary" id="againBtn">다시 도전</button><button style="margin-top:8px;width:100%" id="labBtn">디지코어로 영구 강화</button></div></div>
+<div class="overlay hidden" id="lab"><div class="panel"><h2>디지코어 연구소</h2><p id="labCoins"></p><div class="choices">
+<button id="buyHp">🛡️ 최대 HP +10 · 비용 10</button>
+<button id="buyPower">🔥 공격력 +1 · 비용 12</button>
+<button id="buySpeed">👟 이동속도 +5% · 비용 10</button>
+</div><button class="primary" id="labClose">닫기</button></div></div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let W=360,H=520,dpr=1;
+function resize(){const r=canvas.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);W=r.width;H=r.height;canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0)}
+new ResizeObserver(resize).observe(canvas);resize();
+const $=id=>document.getElementById(id);
+const chars={
+ agumon:{name:'아구몬',hp:100,power:12,speed:145,color:'#f2a33b',type:'백신',desc:'기본 공격형 · 화염 탄환',icon:'🔥'},
+ gabumon:{name:'파피몬',hp:115,power:10,speed:138,color:'#e8d8a0',type:'데이터',desc:'튼튼한 생존형 · 빙결 탄환',icon:'❄️'},
+ patamon:{name:'파닥몬',hp:85,power:9,speed:170,color:'#e9a65b',type:'백신',desc:'빠른 기동형 · 바람 탄환',icon:'🌪️'},
+ biyomon:{name:'피요몬',hp:92,power:11,speed:158,color:'#e98283',type:'백신',desc:'민첩한 공중형 · 불꽃 깃털',icon:'🪽'},
+ tentomon:{name:'텐타몬',hp:105,power:13,speed:132,color:'#d6a34b',type:'백신',desc:'강력한 전격 공격형',icon:'⚡'},
+ palmon:{name:'팔몬',hp:108,power:10,speed:142,color:'#69b96b',type:'데이터',desc:'균형 잡힌 자연형',icon:'🌿'},
+ gomamon:{name:'쉬라몬',hp:125,power:10,speed:130,color:'#e7e8ed',type:'백신',desc:'높은 체력의 방어형',icon:'🌊'},
+ gatomon:{name:'가트몬',hp:96,power:14,speed:158,color:'#eee0bd',type:'백신',desc:'빠른 연속 공격형',icon:'🐾'},
+ veemon:{name:'브이몬',hp:110,power:12,speed:150,color:'#4d9fe0',type:'프리',desc:'균형형 · 아머 진화 잠재력',icon:'💎'},
+ guilmon:{name:'길몬',hp:108,power:14,speed:140,color:'#d9574d',type:'바이러스',desc:'공격 특화 · 강력한 탄환',icon:'🦖'},
+ renamon:{name:'레나몬',hp:82,power:13,speed:180,color:'#e8c45c',type:'데이터',desc:'최고 기동력의 원거리형',icon:'🦊'},
+ terriermon:{name:'테리어몬',hp:100,power:12,speed:155,color:'#9acb8c',type:'백신',desc:'빠른 사격과 균형 잡힌 능력',icon:'🐰'},
+ impmon:{name:'임프몬',hp:78,power:17,speed:160,color:'#7565a7',type:'바이러스',desc:'낮은 체력, 높은 공격력',icon:'😈'},
+ hawkmon:{name:'호크몬',hp:94,power:11,speed:168,color:'#b87952',type:'프리',desc:'공중 기동 특화형',icon:'🦅'},
+ wormmon:{name:'웜몬',hp:118,power:9,speed:135,color:'#72b88b',type:'프리',desc:'튼튼한 성장형 · 안정적인 생존',icon:'🐛'}
+};
+// 진화 데이터: 여러 디지바이스/게임 매체에서 확인되는 경로를 통합한 게임용 분기.
+ // 각 디지몬의 속성은 가능한 한 Vital Bracelet 계열 차트와 공식 카드/도감 표기를 우선 반영.
+ // 레벨/조건은 게임 밸런스를 위한 자체 규칙이며 원작 기기 조건을 그대로 복제한 것은 아님.
+const evoGraph={
+ agumon:{
+  5:[
+   {name:'그레이몬',stage:'성숙기',type:'백신',emoji:'🦖',mult:1.25,desc:'어드벤처 대표 진화 경로'},
+   {name:'티라노몬',stage:'성숙기',type:'데이터',emoji:'🦕',mult:1.28,desc:'초기 디지털 몬스터의 대체 진화 경로'},
+   {name:'데블몬',stage:'성숙기',type:'바이러스',emoji:'😈',mult:1.3,desc:'초기 디지털 몬스터의 바이러스 분기'}
+  ],
+  10:{
+   '그레이몬':[{name:'메탈그레이몬',stage:'완전체',type:'백신',emoji:'🤖',mult:1.65,desc:'정석 어드벤처 진화'}],
+   '티라노몬':[{name:'마메몬',stage:'완전체',type:'데이터',emoji:'🟡',mult:1.62,desc:'디지바이스 계열의 대체 성장 경로'}],
+   '데블몬':[{name:'네오데블몬',stage:'완전체',type:'바이러스',emoji:'👿',mult:1.7,desc:'바이러스 계열의 어둠 진화 분기'}]
+  },
+  15:{
+   '메탈그레이몬':[{name:'워그레이몬',stage:'궁극체',type:'백신',emoji:'⚔️',mult:2.15,desc:'어드벤처 대표 궁극체'}],
+   '마메몬':[{name:'메탈마메몬',stage:'궁극체',type:'데이터',emoji:'🦾',mult:2.05,desc:'기계형 데이터 진화 분기'}],
+   '네오데블몬':[{name:'피에몬',stage:'궁극체',type:'바이러스',emoji:'🃏',mult:2.2,desc:'바이러스 계열의 마왕형 분기'}]
+  },
+  20:{
+   '워그레이몬':[{name:'오메가몬',stage:'조그레스·궁극체',type:'백신',emoji:'🛡️',mult:2.85,desc:'메탈가루몬 파트너 링크(처치 40으로 해금) + 디지코어 10 필요',jogress:true},{name:'워그레이몬 X',stage:'X항체 강화',type:'백신',emoji:'⚔️',mult:2.75,desc:'조그레스 없이 선택 가능한 X항체 분기'}],
+   '메탈마메몬':[{name:'메탈마메몬 X',stage:'X항체 강화',type:'데이터',emoji:'⚙️',mult:2.65,desc:'게임용 X항체 강화 분기'}],
+   '피에몬':[{name:'피에몬 · 마도 각성',stage:'초궁극체급·게임 오리지널',type:'바이러스',emoji:'🎭',mult:2.9,desc:'게임 오리지널 초궁극체급 강화'}]
+  },
+  25:{
+   '오메가몬':[{name:'오메가몬 X',stage:'X항체 형태',type:'백신',emoji:'🌟',mult:3.45,desc:'X항체 해방. 초궁극체급 도전 단계'}],
+   '오메가몬 즈왈트':[{name:'오메가몬 즈왈트 D',stage:'특수 강화 형태',type:'바이러스',emoji:'🌑',mult:3.5,desc:'바이러스 계열 특수 강화'}],
+   '메탈가루몬 X':[{name:'메탈가루몬 · 우정의 각성',stage:'초궁극체급·게임 오리지널',type:'백신',emoji:'💎',mult:3.45,desc:'게임 오리지널 초궁극체급 강화'}],
+   '메탈가루몬(흑) X':[{name:'메탈가루몬(흑) · 암흑 각성',stage:'초궁극체급·게임 오리지널',type:'바이러스',emoji:'🌌',mult:3.5,desc:'게임 오리지널 초궁극체급 강화'}],
+   '워그레이몬 X':[{name:'워그레이몬 · 용기의 각성',stage:'초궁극체급·게임 오리지널',type:'백신',emoji:'🔥',mult:3.45,desc:'게임 오리지널 초궁극체급 강화'}],
+   '블랙워그레이몬 X':[{name:'블랙워그레이몬 · 암흑 각성',stage:'초궁극체급·게임 오리지널',type:'바이러스',emoji:'🌌',mult:3.5,desc:'게임 오리지널 초궁극체급 강화'}],
+   '메탈마메몬 X':[{name:'메탈마메몬 오버드라이브',stage:'초궁극체급·게임 오리지널',type:'데이터',emoji:'💠',mult:3.5,desc:'게임 오리지널 최종 강화'}]
+  },
+  30:{
+   '오메가몬 X':[{name:'오메가몬 X · 초월 모드',stage:'초궁극체급·게임 오리지널',type:'백신',emoji:'✨',mult:4.1,desc:'최종 초월 강화 형태'}],
+   '오메가몬 즈왈트 D':[{name:'오메가몬 즈왈트 D · 초월 모드',stage:'초궁극체급·게임 오리지널',type:'바이러스',emoji:'🌌',mult:4.1,desc:'최종 초월 강화 형태'}]
+  }
+ },
+ gabumon:{
+  5:[
+   {name:'가루몬',stage:'성숙기',type:'백신',emoji:'🐺',mult:1.25,desc:'Vital Bracelet 계열의 대표 경로'},
+   {name:'가루몬(흑)',stage:'성숙기',type:'바이러스',emoji:'🐺',mult:1.3,desc:'블랙 계열 분기'},
+   {name:'고리몬',stage:'성숙기',type:'데이터',emoji:'🦍',mult:1.28,desc:'Vital Bracelet 계열의 대체 분기'}
+  ],
+  10:{
+   '가루몬':[{name:'워가루몬',stage:'완전체',type:'백신',emoji:'🥋',mult:1.65,desc:'정석 늑대 전사 진화'}],
+   '가루몬(흑)':[{name:'워가루몬(흑)',stage:'완전체',type:'바이러스',emoji:'🥷',mult:1.68,desc:'블랙 계열 진화'}],
+   '고리몬':[{name:'발브레몬',stage:'완전체',type:'데이터',emoji:'🚚',mult:1.62,desc:'기계형 대체 진화'}]
+  },
+  15:{
+   '워가루몬':[{name:'메탈가루몬',stage:'궁극체',type:'백신',emoji:'❄️',mult:2.15,desc:'어드벤처 대표 궁극체'}],
+   '워가루몬(흑)':[{name:'메탈가루몬(흑)',stage:'궁극체',type:'바이러스',emoji:'🌑',mult:2.2,desc:'블랙 계열 궁극체'}],
+   '발브레몬':[{name:'즈드가루몬',stage:'궁극체',type:'데이터',emoji:'🚀',mult:2.1,desc:'Vital Bracelet 계열의 데이터 분기'}]
+  },
+  20:{
+   '메탈가루몬':[{name:'오메가몬',stage:'조그레스·궁극체',type:'백신',emoji:'🛡️',mult:2.85,desc:'워그레이몬 파트너 링크(처치 40으로 해금) + 디지코어 10 필요',jogress:true},{name:'메탈가루몬 X',stage:'X항체 강화',type:'백신',emoji:'❄️',mult:2.75,desc:'조그레스 없이 선택 가능한 X항체 분기'}],
+   '메탈가루몬(흑)':[{name:'오메가몬 즈왈트',stage:'조그레스·궁극체',type:'바이러스',emoji:'🖤',mult:2.9,desc:'블랙워그레이몬 파트너 링크(처치 40으로 해금) + 디지코어 10 필요',jogress:true},{name:'메탈가루몬(흑) X',stage:'X항체 강화',type:'바이러스',emoji:'🌑',mult:2.8,desc:'조그레스 없이 선택 가능한 X항체 분기'}],
+   '즈드가루몬':[{name:'즈드가루몬 X',stage:'X항체 강화',type:'데이터',emoji:'⚡',mult:2.7,desc:'게임용 X항체 강화 분기'}]
+  },
+  25:{
+   '오메가몬':[{name:'오메가몬 X',stage:'X항체 형태',type:'백신',emoji:'🌟',mult:3.45,desc:'X항체 해방. 초궁극체급 도전 단계'}],
+   '오메가몬 즈왈트':[{name:'오메가몬 즈왈트 D',stage:'특수 강화 형태',type:'바이러스',emoji:'🌑',mult:3.5,desc:'바이러스 계열 특수 강화'}],
+   '메탈가루몬 X':[{name:'메탈가루몬 · 우정의 각성',stage:'초궁극체급·게임 오리지널',type:'백신',emoji:'💎',mult:3.45,desc:'게임 오리지널 초궁극체급 강화'}],
+   '메탈가루몬(흑) X':[{name:'메탈가루몬(흑) · 암흑 각성',stage:'초궁극체급·게임 오리지널',type:'바이러스',emoji:'🌌',mult:3.5,desc:'게임 오리지널 초궁극체급 강화'}],
+   '워그레이몬 X':[{name:'워그레이몬 · 용기의 각성',stage:'초궁극체급·게임 오리지널',type:'백신',emoji:'🔥',mult:3.45,desc:'게임 오리지널 초궁극체급 강화'}],
+   '블랙워그레이몬 X':[{name:'블랙워그레이몬 · 암흑 각성',stage:'초궁극체급·게임 오리지널',type:'바이러스',emoji:'🌌',mult:3.5,desc:'게임 오리지널 초궁극체급 강화'}],
+   '즈드가루몬 X':[{name:'즈드가루몬 오버드라이브',stage:'초궁극체급·게임 오리지널',type:'데이터',emoji:'💠',mult:3.5,desc:'게임 오리지널 최종 강화'}]
+  },
+  30:{
+   '오메가몬 X':[{name:'오메가몬 X · 초월 모드',stage:'초궁극체급·게임 오리지널',type:'백신',emoji:'✨',mult:4.1,desc:'최종 초월 강화 형태'}],
+   '오메가몬 즈왈트 D':[{name:'오메가몬 즈왈트 D · 초월 모드',stage:'초궁극체급·게임 오리지널',type:'바이러스',emoji:'🌌',mult:4.1,desc:'최종 초월 강화 형태'}]
+  }
+ },
+ patamon:{
+  5:[
+   {name:'엔젤몬',stage:'성숙기',type:'백신',emoji:'👼',mult:1.25,desc:'어드벤처 대표 진화 경로'},
+   {name:'페가수스몬',stage:'아머체',type:'프리',emoji:'🪽',mult:1.3,desc:'희망의 디지멘탈을 사용하는 아머 진화'}
+  ],
+  10:{
+   '엔젤몬':[{name:'홀리엔젤몬',stage:'완전체',type:'백신',emoji:'✨',mult:1.65,desc:'어드벤처 대표 진화 경로'}],
+   '페가수스몬':[{name:'페가수스몬 · 성휘 모드',stage:'아머 강화·게임 오리지널',type:'프리',emoji:'🌠',mult:1.7,desc:'희망의 힘을 강화한 게임 전용 형태'}]
+  },
+  15:{
+   '홀리엔젤몬':[{name:'세라피몬',stage:'궁극체',type:'백신',emoji:'😇',mult:2.15,desc:'삼대천사 중 하나인 궁극체'}],
+   '페가수스몬 · 성휘 모드':[{name:'세라피몬',stage:'궁극체',type:'백신',emoji:'😇',mult:2.15,desc:'게임 전용 분기에서 세라피몬으로 합류'}]
+  },
+  20:{
+   '세라피몬':[{name:'세라피몬 · 각성',stage:'초궁극체급·게임 오리지널',type:'백신',emoji:'🌟',mult:2.9,desc:'공식 진화 단계가 아닌 게임 전용 최종 각성 형태'}]
+  },
+  25:{
+   '세라피몬 · 각성':[{name:'세라피몬 · 천상의 초월',stage:'초궁극체급·게임 오리지널',type:'백신',emoji:'✨',mult:3.8,desc:'최종 초월 강화 형태'}]
+  }
+ }
+};
+
+// 추가 플레이어블 12종의 대표 진화 계열. 분기/조건은 플레이용 조정이며 매체별 공식 진화도는 다를 수 있음.
+const extraEvolutions={
+ biyomon:[['버드라몬','성숙기','백신','🦅',1.28],['가루다몬','완전체','백신','🔥',1.68],['피닉스몬','궁극체','백신','🪽',2.2],['피닉스몬 · 불사조 각성','초궁극체급·게임 오리지널','백신','✨',3.5]],
+ tentomon:[['캅테리몬','성숙기','백신','🪲',1.28],['아트라캅테리몬','완전체','백신','🪲',1.68],['헤라클레스캅테리몬','궁극체','백신','🪲',2.2],['헤라클레스캅테리몬 · 오버드라이브','초궁극체급·게임 오리지널','백신','⚡',3.5]],
+ palmon:[['니드몬','성숙기','데이터','🌵',1.28],['릴리몬','완전체','데이터','🌸',1.68],['로제몬','궁극체','데이터','🌹',2.2],['로제몬 버스트 모드','초궁극체급·게임 오리지널','데이터','🌹',3.5]],
+ gomamon:[['원뿔몬','성숙기','백신','🦭',1.28],['쥬드몬','완전체','백신','🔨',1.68],['바이킹몬','궁극체','백신','⚓',2.2],['바이킹몬 · 해신 각성','초궁극체급·게임 오리지널','백신','🌊',3.5]],
+ gatomon:[['엔젤우몬','완전체','백신','👼',1.65],['홀리드라몬','궁극체','백신','🐉',2.15],['오파니몬','궁극체','백신','✨',2.35],['오파니몬 · 천상의 초월','초궁극체급·게임 오리지널','백신','🌟',3.6]],
+ veemon:[['엑스브이몬','성숙기','프리','🐲',1.28],['파일드라몬','완전체·조그레스','프리','🐉',1.72],['임페리얼드라몬 드래곤 모드','궁극체','프리','🐲',2.25],['임페리얼드라몬 파이터 모드','초궁극체급·게임 오리지널','프리','⚔️',3.6]],
+ guilmon:[['그라우몬','성숙기','바이러스','🦖',1.3],['메가로그라우몬','완전체','바이러스','🤖',1.7],['듀크몬','궁극체','바이러스','🛡️',2.25],['듀크몬 크림슨 모드','초궁극체급·게임 오리지널','바이러스','🔥',3.65]],
+ renamon:[['구미호몬','성숙기','데이터','🦊',1.28],['도사몬','완전체','데이터','🧙',1.68],['샤크라몬','궁극체','데이터','🦊',2.2],['샤크라몬 미코 모드','초궁극체급·게임 오리지널','데이터','✨',3.5]],
+ terriermon:[['가르고몬','성숙기','백신','🐰',1.28],['래피드몬','완전체','백신','⚡',1.68],['세인트가르고몬','궁극체','백신','🤖',2.2],['세인트가르고몬 · 풀 버스트','초궁극체급·게임 오리지널','백신','💥',3.5]],
+ impmon:[['위자몬','성숙기','데이터','🪄',1.28],['바알몬','완전체','바이러스','🗡️',1.7],['베르제브몬','궁극체','바이러스','🏍️',2.25],['베르제브몬 블라스트 모드','초궁극체급·게임 오리지널','바이러스','💥',3.65]],
+ hawkmon:[['아큐라몬','성숙기','프리','🦅',1.28],['실피드몬','완전체·조그레스','프리','🪽',1.7],['발키리몬','궁극체','프리','⚔️',2.2],['발키리몬 · 천공 각성','초궁극체급·게임 오리지널','프리','🌟',3.5]],
+ wormmon:[['스팅몬','성숙기','프리','🐛',1.28],['파일드라몬','완전체·조그레스','프리','🪲',1.7],['그랑쿠가몬','궁극체','바이러스','🪲',2.2],['그랑쿠가몬 · 심연 각성','초궁극체급·게임 오리지널','바이러스','🌌',3.5]]
+};
+Object.entries(extraEvolutions).forEach(([id,line])=>{
+ const [a,b,c,d]=line;
+ evoGraph[id]={
+  5:[{name:a[0],stage:a[1],type:a[2],emoji:a[3],mult:a[4],desc:'대표 진화 경로'}],
+  10:{[a[0]]:[{name:b[0],stage:b[1],type:b[2],emoji:b[3],mult:b[4],desc:'대표 진화 경로'}]},
+  15:{[b[0]]:[{name:c[0],stage:c[1],type:c[2],emoji:c[3],mult:c[4],desc:'대표 궁극 진화 경로'}]},
+  20:{[c[0]]:[{name:d[0],stage:d[1],type:d[2],emoji:d[3],mult:d[4],desc:'최종 각성 형태 · 게임 밸런스용'}]}
+ };
+});
+const typeNames=['백신','데이터','바이러스','프리'];
+// Digimon Adventure (1999) story-inspired stage route. Gameplay layouts and waves are original recreations.
+const stages=[
+ {name:'파일섬',zone:'열대 정글 · 무한산',boss:'데블몬',bossType:'바이러스',bossHp:460,theme:'jungle',mobs:[['쿠와가몬','바이러스'],['오그레몬','바이러스'],['레오몬','백신'],['쉘몬','데이터']]},
+ {name:'서버대륙',zone:'사막 · 에테몬 콜로세움',boss:'에테몬',bossType:'바이러스',bossHp:590,theme:'desert',mobs:[['가즈몬','바이러스'],['스컬그레이몬','바이러스'],['드리모게몬','데이터'],['픽시몬','데이터']]},
+ {name:'도쿄·오다이바',zone:'안개 낀 도심',boss:'베놈묘티스몬',bossType:'바이러스',bossHp:720,theme:'tokyo',mobs:[['데미데비몬','바이러스'],['바케몬','바이러스'],['스컬메라몬','바이러스'],['가트몬','백신']]},
+ {name:'나선산맥 – 바다',zone:'암흑의 바다',boss:'메탈시드라몬',bossType:'바이러스',bossHp:790,theme:'ocean',mobs:[['시드라몬','데이터'],['메가시드라몬','바이러스'],['워메몬','바이러스'],['고래몬','백신']]},
+ {name:'나선산맥 – 숲',zone:'피노키몬의 인형 숲',boss:'피노키몬',bossType:'바이러스',bossHp:850,theme:'forest',mobs:[['쥬레이몬','데이터'],['우드몬','바이러스'],['기즈몬','바이러스'],['마리오네트몬','바이러스']]},
+ {name:'나선산맥 – 폐허 도시',zone:'기계 문명의 잔해',boss:'무겐드라몬',bossType:'바이러스',bossHp:930,theme:'ruins',mobs:[['메카노리몬','데이터'],['가드로몬','바이러스'],['안드로몬','백신'],['메탈티라노몬','바이러스']]},
+ {name:'나선산맥 – 정상',zone:'피에몬의 어둠의 성',boss:'피에몬',bossType:'바이러스',bossHp:1020,theme:'summit',mobs:[['마법사몬','바이러스'],['팬텀몬','바이러스'],['데블몬','바이러스'],['레이디데블몬','바이러스']]},
+ {name:'최종 결전',zone:'붕괴하는 디지털 공간',boss:'아포카리몬',bossType:'바이러스',bossHp:1250,theme:'void',mobs:[['메탈그레이몬(바이러스)','바이러스'],['키메라몬','바이러스'],['베놈묘티스몬','바이러스'],['피에몬','바이러스']]}
+];
+let stageIndex=0,maxStageUnlocked=0;
+try{maxStageUnlocked=Math.max(0,Math.min(stages.length-1,Number(localStorage.getItem('digiMaxStage')||0)))}catch(e){}
+function typeMultiplier(attacker,defender){if((attacker==='백신'&&defender==='바이러스')||(attacker==='바이러스'&&defender==='데이터')||(attacker==='데이터'&&defender==='백신'))return 1.5;if((attacker==='바이러스'&&defender==='백신')||(attacker==='데이터'&&defender==='바이러스')||(attacker==='백신'&&defender==='데이터'))return .75;return 1;}
+let selected='agumon',player,enemies=[],shots=[],gems=[],particles=[],running=false,paused=false,last=0,elapsed=0,kills=0,level=1,xp=0,xpNeed=5,coins=0,runCoins=0,spawn=0,fire=0,special=0,move={x:0,y:0},upgrades={power:0,speed:0,magnet:0,armor:0,orbit:0},perm={hp:0,power:0,speed:0},bossClock=55,boss=null,animTime=0,discovered=new Set(['아구몬','파피몬','파닥몬']);
+try{JSON.parse(localStorage.getItem('digiCodex')||'[]').forEach(n=>discovered.add(n))}catch(e){}
+try{perm=JSON.parse(localStorage.getItem('digiPerm')||'{"hp":0,"power":0,"speed":0}')}catch(e){}
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),rand=(a,b)=>a+Math.random()*(b-a);
+function renderStageList(){
+ const list=$('stageList');if(!list)return;list.innerHTML='';
+ stages.forEach((st,i)=>{
+  const b=document.createElement('button');b.className='stage-card'+(i===stageIndex?' selected':'');
+  b.disabled=i>maxStageUnlocked;
+  b.innerHTML='<b>'+(i<maxStageUnlocked?'✓ ':'')+'STAGE '+(i+1)+' · '+st.name+'</b><small>'+st.zone+'</small><small>보스: '+st.boss+(i>maxStageUnlocked?' · 잠김':'')+'</small>';
+  b.onclick=()=>{stageIndex=i;renderStageList();$('modeLabel').textContent=st.name};
+  list.appendChild(b);
+ });
+ $('modeLabel').textContent=stages[stageIndex].name;
+}
+const starterIds=['agumon','gabumon','patamon'];
+const unlockRules={
+ biyomon:{label:'첫 사냥꾼',desc:'누적 적 50마리 처치',test:c=>c.kills>=50},
+ tentomon:{label:'전격 연구가',desc:'누적 적 100마리 처치',test:c=>c.kills>=100},
+ palmon:{label:'파일섬의 수호자',desc:'파일섬 보스 데블몬 격파',test:c=>c.stages>=1},
+ gomamon:{label:'서버대륙 탐험가',desc:'서버대륙 보스 에테몬 격파',test:c=>c.stages>=2},
+ gatomon:{label:'현실 세계의 영웅',desc:'도쿄·오다이바 보스 격파',test:c=>c.stages>=3},
+ veemon:{label:'보스 헌터',desc:'보스 3회 격파',test:c=>c.bosses>=3},
+ guilmon:{label:'대량 섬멸',desc:'누적 적 300마리 처치',test:c=>c.kills>=300},
+ renamon:{label:'숙련된 테이머',desc:'한 번의 플레이에서 레벨 10 달성',test:c=>c.maxLevel>=10},
+ terriermon:{label:'심해의 승리자',desc:'메탈시드라몬 격파',test:c=>c.stages>=4},
+ impmon:{label:'악마 사냥꾼',desc:'누적 적 500마리 처치',test:c=>c.kills>=500},
+ hawkmon:{label:'인형 숲 탈출',desc:'피노키몬 격파',test:c=>c.stages>=5},
+ wormmon:{label:'기계 도시 정복자',desc:'무겐드라몬 격파',test:c=>c.stages>=6}
+};
+let career={kills:0,bosses:0,stages:0,maxLevel:0,unlocked:starterIds.slice()};
+try{career={...career,...JSON.parse(localStorage.getItem('digiCareer')||'{}')};career.unlocked=[...new Set([...starterIds,...(career.unlocked||[])])]}catch(e){}
+function saveCareer(){localStorage.setItem('digiCareer',JSON.stringify(career))}
+function checkAchievements(){
+ let changed=false;
+ Object.entries(unlockRules).forEach(([id,rule])=>{if(!career.unlocked.includes(id)&&rule.test(career)){career.unlocked.push(id);changed=true;showToast('캐릭터 해금: '+chars[id].name)}});
+ if(changed){saveCareer();renderCharGrid();renderAchievements()}
+ saveCareer();
+}
+let toastMessage='',toastTimer=0;
+function showToast(msg){toastMessage=msg;toastTimer=2.5}
+function renderCharGrid(){
+ const grid=$('charGrid');if(!grid)return;grid.innerHTML='';
+ Object.entries(chars).forEach(([id,c])=>{
+  const unlocked=career.unlocked.includes(id),b=document.createElement('button');
+  b.className='char'+(id===selected?' selected':'')+(!unlocked?' locked':'');
+  b.innerHTML=c.icon+'<br>'+c.name+(unlocked?'':'<small>🔒 '+unlockRules[id].label+'</small>');
+  b.disabled=!unlocked;
+  b.onclick=()=>{selected=id;renderCharGrid();$('charDesc').textContent=c.desc+' · '+c.type};
+  grid.appendChild(b);
+ });
+ $('rosterCount').textContent='해금 '+career.unlocked.length+' / 15 · 잠금 '+(15-career.unlocked.length);
+}
+function renderAchievements(){
+ const list=$('achievementList');if(!list)return;list.innerHTML='';
+ Object.entries(unlockRules).forEach(([id,r])=>{
+  const done=career.unlocked.includes(id),b=document.createElement('button');b.disabled=true;
+  b.innerHTML='<b>'+(done?'✅ ':'🔒 ')+chars[id].name+' · '+r.label+'</b><br><small>'+r.desc+'</small>';
+  b.style.opacity=done?'1':'.72';list.appendChild(b);
+ });
+ $('achievementSummary').textContent='해금 '+career.unlocked.length+' / 15 · 누적 처치 '+career.kills+' · 보스 '+career.bosses+' · 스테이지 '+career.stages+'/8';
+}
+$('achievementBtn').onclick=()=>{renderAchievements();$('achievements').classList.remove('hidden')};
+$('achievementClose').onclick=()=>$('achievements').classList.add('hidden');
+renderCharGrid();
+function reset(){const c=chars[selected];boss=null;bossClock=52;animTime=0;player={x:W/2,y:H/2,r:12,hp:c.hp+perm.hp*10,maxHp:c.hp+perm.hp*10,speed:c.speed*(1+perm.speed*.05),power:c.power+perm.power,inv:0,evo:0,type:c.type,form:c.name};enemies=[];shots=[];gems=[];particles=[];elapsed=0;kills=0;level=1;career.maxLevel=0;xp=0;xpNeed=5;runCoins=0;spawn=0;fire=0;special=0;upgrades={power:0,speed:0,magnet:0,armor:0,orbit:0};running=true;paused=false;hideAll();last=performance.now();requestAnimationFrame(loop)}
+function hideAll(){['start','levelup','evolution','gameover','lab','codex','stageclear','achievements'].forEach(id=>$(id).classList.add('hidden'))}
+$('startBtn').onclick=reset;$('againBtn').onclick=reset;renderStageList();
+function getEvolutionOptions(){
+ let table=evoGraph[selected],list=table[level];
+ if(!list)return [];
+ if(Array.isArray(list))return list;
+ return list[player.form]||[];
+}
+function showEvolution(options){
+ running=false;const box=$('evoChoices');box.innerHTML='';
+ options.forEach(form=>{
+  const locked=form.jogress&&(kills<40||runCoins<10);
+  const b=document.createElement('button');
+  b.innerHTML='<b>'+form.emoji+' '+form.name+'</b><small>'+form.stage+' · '+form.type+' · '+form.desc+(locked?'<br>🔒 조건: 처치 60 / 디지코어 20 (현재 '+kills+' / '+runCoins+')':'')+'</small>';
+  b.disabled=!!locked;b.style.opacity=locked?'.45':'1';
+  b.onclick=()=>applyEvolution(form);
+  box.appendChild(b);
+ });
+ if(!box.children.length){running=true;return}
+ $('evolution').classList.remove('hidden');
+}
+function applyEvolution(form){
+ player.evo++;player.form=form.name;player.type=form.type;discovered.add(form.name);localStorage.setItem('digiCodex',JSON.stringify([...discovered]));
+ const base=chars[selected];player.power=Math.round((base.power+perm.power)*form.mult);
+ player.maxHp=Math.round((base.hp+perm.hp*10)*(1+(form.mult-1)*.35));
+ player.hp=player.maxHp;player.r=Math.min(18,12+player.evo);
+ if(form.jogress)runCoins-=10;
+ $('evolution').classList.add('hidden');
+ levelUp();
+}
+function checkEvolution(){const options=getEvolutionOptions();if(options.length){showEvolution(options);return true}return false}
+function levelUp(){running=false;const box=$('upgradeChoices');box.innerHTML='';let picks=[...upgradePool].sort(()=>Math.random()-.5).slice(0,3);picks.forEach(([k,n,d])=>{let b=document.createElement('button');b.innerHTML='<b>'+n+'</b><br><small>'+d+'</small>';b.onclick=()=>chooseUpgrade(k);box.appendChild(b)});$('levelup').classList.remove('hidden')}
+function spawnEnemy(){let side=Math.floor(Math.random()*4),x=side===0?-20:side===1?W+20:rand(0,W),y=side===2?-20:side===3?H+20:rand(0,H);let big=elapsed>35&&Math.random()<.10;let hp=(big?95:24)+elapsed*.28+stageIndex*8;let mob=stages[stageIndex].mobs[Math.floor(Math.random()*stages[stageIndex].mobs.length)];let type=mob[1];enemies.push({x,y,r:big?16:10,hp,max:hp,speed:big?32:rand(39,56)+elapsed*.13+stageIndex*1.8,big,hit:0,type,name:mob[0]})}
+function spawnBoss(){if(boss)return;const st=stages[stageIndex];const name=st.boss;boss={x:W/2,y:-30,r:stageIndex===7?31:stageIndex>=3?27:24,hp:st.bossHp+elapsed*1.5,max:st.bossHp+elapsed*1.5,speed:stageIndex>=3?39:34,name,type:st.bossType,attack:0};$('modeLabel').textContent='BOSS: '+name;}
+function shoot(){if(!enemies.length&&!boss)return;let target=enemies.reduce((a,b)=>!a||Math.hypot(b.x-player.x,b.y-player.y)<Math.hypot(a.x-player.x,a.y-player.y)?b:a,null);if(boss&&(!target||Math.hypot(boss.x-player.x,boss.y-player.y)<Math.hypot(target.x-player.x,target.y-player.y)))target=boss;if(!target)return;let dx=target.x-player.x,dy=target.y-player.y,d=Math.hypot(dx,dy)||1;shots.push({x:player.x,y:player.y,vx:dx/d*(selected==='patamon'?360:300),vy:dy/d*(selected==='patamon'?360:300),life:1.2,damage:player.power*(1+upgrades.power*.35)*typeMultiplier(player.type,target.type),r:selected==='agumon'?5:4,kind:selected})}
+function update(dt){elapsed+=dt;animTime+=dt;spawn+=dt;fire+=dt;bossClock-=dt;player.inv=Math.max(0,player.inv-dt);special=Math.min(100,special+dt*3.2);
+let dx=move.x,dy=move.y,mag=Math.hypot(dx,dy);if(mag>1){dx/=mag;dy/=mag}player.x=clamp(player.x+dx*player.speed*(1+upgrades.speed*.15)*dt,14,W-14);player.y=clamp(player.y+dy*player.speed*(1+upgrades.speed*.15)*dt,14,H-14);
+if(spawn>Math.max(.28,1.1-elapsed*.009)){spawn=0;spawnEnemy();if(elapsed>40&&Math.random()<.4)spawnEnemy()}
+if(bossClock<=0&&!boss){spawnBoss();bossClock=999999}
+if(boss){let bx=player.x-boss.x,by=player.y-boss.y,bd=Math.hypot(bx,by)||1;boss.x+=bx/bd*boss.speed*dt;boss.y+=by/bd*boss.speed*dt;if(bd<boss.r+player.r&&player.inv<=0){player.hp-=Math.max(1,22*typeMultiplier(boss.type,player.type)-upgrades.armor*2);player.inv=.8;if(player.hp<=0)endRun()}}
+if(fire>.62){fire=0;shoot()}
+enemies.forEach(e=>{let x=player.x-e.x,y=player.y-e.y,d=Math.hypot(x,y)||1;e.x+=x/d*e.speed*dt;e.y+=y/d*e.speed*dt;if(Math.hypot(x,y)<e.r+player.r&&player.inv<=0){let dmg=(e.big?18:8)*typeMultiplier(e.type,player.type);player.hp-=Math.max(1,dmg-upgrades.armor*2);player.inv=.65;if(player.hp<=0)endRun()}if(upgrades.orbit&&Math.hypot(x,y)<48){e.hp-=18*upgrades.orbit*dt*typeMultiplier(player.type,e.type)}});
+shots.forEach(s=>{s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;if(boss&&!s.dead&&Math.hypot(s.x-boss.x,s.y-boss.y)<boss.r+s.r){boss.hp-=s.damage*typeMultiplier(player.type,boss.type);s.dead=true;if(boss.hp<=0){runCoins+=25;gems.push({x:boss.x,y:boss.y,v:5});completeStage();}}for(let e of enemies){if(!s.dead&&Math.hypot(s.x-e.x,s.y-e.y)<e.r+s.r){e.hp-=s.damage;if(s.kind==='gabumon')e.speed*=.82;s.dead=true;for(let i=0;i<3;i++)particles.push({x:e.x,y:e.y,vx:rand(-35,35),vy:rand(-35,35),life:.25});break}}});
+shots=shots.filter(s=>s.life>0&&!s.dead);
+enemies=enemies.filter(e=>{if(e.hp<=0){kills++;gems.push({x:e.x,y:e.y,v:1});if(e.big){gems.push({x:e.x+8,y:e.y,v:2});runCoins+=5}discovered.add(e.name||'미확인 적');localStorage.setItem('digiCodex',JSON.stringify([...discovered]));return false}return true});
+gems.forEach(g=>{if(!running)return;let dx=player.x-g.x,dy=player.y-g.y,d=Math.hypot(dx,dy);if(d<85+upgrades.magnet*45){g.x+=dx/(d||1)*220*dt;g.y+=dy/(d||1)*220*dt}if(d<player.r+8){g.got=true;xp+=g.v;if(xp>=xpNeed){xp-=xpNeed;level++;career.maxLevel=Math.max(career.maxLevel,level);checkAchievements();xpNeed=Math.floor(xpNeed*1.35+2);if(!checkEvolution())levelUp()}}});gems=gems.filter(g=>!g.got);
+particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);
+}
+function pixelDino(x,y,color,scale=2){
+ // Original, compact pixel-art silhouettes; forms evolve visually by stage and family.
+ const f=player?player.form:'';const family=selected;const t=animTime||0;const bob=Math.sin(t*8)*1.2;
+ ctx.save();ctx.translate(Math.round(x),Math.round(y+bob));ctx.scale(scale,scale);
+ const px=(xx,yy,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(xx),Math.round(yy),w,h)};
+ px(-9,7,18,3,'#1b2635');
+ if(family==='agumon'||/그레이몬|워그레이몬|오메가몬|티라노|마메몬|데블몬|피에몬/.test(f)){
+   px(-7,-6,14,12,color);px(-5,-11,10,6,color);px(-10,-11,4,7,color);px(6,-11,4,7,color);
+   px(-4,-13,3,4,'#f4c46b');px(3,-13,3,4,'#f4c46b');px(2,-8,3,3,'#fff');px(3,-7,1,1,'#182238');px(-5,1,10,4,'#f3d8a2');
+   px(-6,6,4,4,'#303d50');px(3,6,4,4,'#303d50');px(7,1,5,2,'#d58b39');
+   if(/그레이몬|워그레이몬|메탈그레이몬/.test(f)){px(-10,-15,4,5,'#e9e1c9');px(6,-15,4,5,'#e9e1c9');px(-12,-2,4,7,'#d9dfe8');px(8,-2,4,7,'#d9dfe8')}
+   if(/메탈|오메가/.test(f)){px(-9,0,5,7,'#aab7c7');px(5,0,5,7,'#aab7c7');px(-2,-14,5,3,'#d8e0e9')}
+ }else if(family==='gabumon'||/가루몬|즈드/.test(f)){
+   px(-8,-5,16,11,color);px(-6,-10,12,6,color);px(-9,-14,5,7,'#d8dce5');px(4,-14,5,7,'#d8dce5');px(-7,-9,14,5,'#f4f0df');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-4,-2,8,5,'#d7c99c');px(-6,6,4,4,'#34435a');px(3,6,4,4,'#34435a');
+   if(/워가루몬|메탈가루몬/.test(f)){px(-11,-2,4,9,'#d9e0eb');px(8,-2,4,9,'#d9e0eb');px(-3,-13,6,3,'#9feaff')}
+ }else{
+   px(-7,-5,14,11,color);px(-5,-9,10,6,color);px(-12,-5,6,7,'#f2c78a');px(6,-5,6,7,'#f2c78a');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-2,6,4,'#f5dfbd');px(-5,6,4,4,'#39465c');px(2,6,4,4,'#39465c');
+   if(/엔젤|홀리|세라피/.test(f)){px(-10,-14,5,8,'#fff0a8');px(6,-14,5,8,'#fff0a8');px(-13,0,4,9,'#f5e9ce');px(9,0,4,9,'#f5e9ce')}
+ }
+ // tiny aura indicates advanced evolution
+ if(player&&player.evo>=3){px(-12,-17,3,3,'#ffe28a');px(10,-17,3,3,'#ffe28a')}
+ ctx.restore();
+}
+function drawMap(){
+ const st=stages[stageIndex];const palettes={
+  jungle:['#29483d','#315445','#527b4b'],desert:['#8c6940','#b18a54','#d0ad70'],tokyo:['#303d52','#46576d','#7b8794'],
+  ocean:['#173b50','#22566b','#4a8b9c'],forest:['#263c35','#345647','#8a6848'],ruins:['#343b43','#4a5660','#87929a'],
+  summit:['#292b43','#47415e','#82718e'],void:['#171a38','#28254f','#7460a6']
+ };const c=palettes[st.theme];ctx.fillStyle=c[0];ctx.fillRect(0,0,W,H);
+ if(st.theme==='jungle'||st.theme==='forest'){
+  for(let y=8;y<H;y+=34)for(let x=8;x<W;x+=38){let xx=x+((y/34|0)%2)*13;ctx.fillStyle=c[1];ctx.fillRect(xx,y,9,5);ctx.fillRect(xx+3,y-4,4,4);ctx.fillStyle=c[2];ctx.fillRect(xx+15,y+14,3,3)}
+  if(st.theme==='forest'){ctx.fillStyle='#5e443d';for(let i=0;i<5;i++){let x=(i*83+27)%W;ctx.fillRect(x,35,7,25);ctx.fillRect(x-8,28,23,9)}}
+ }else if(st.theme==='desert'){
+  ctx.strokeStyle=c[1];ctx.lineWidth=2;for(let y=45;y<H;y+=75){ctx.beginPath();ctx.moveTo(0,y);ctx.quadraticCurveTo(W*.5,y-25,W,y+5);ctx.stroke()}
+  ctx.fillStyle='#76583e';ctx.fillRect(W*.35,H*.22,W*.3,8);ctx.fillRect(W*.35,H*.22,8,48);ctx.fillRect(W*.65-8,H*.22,8,48);
+ }else if(st.theme==='tokyo'||st.theme==='ruins'){
+  ctx.strokeStyle=c[1];ctx.lineWidth=2;for(let x=0;x<W;x+=55){ctx.strokeRect(x+4,18,34,H-36);for(let y=28;y<H-20;y+=22){ctx.fillStyle=c[2];ctx.fillRect(x+11,y,7,5);ctx.fillRect(x+25,y,7,5)}}
+  ctx.strokeStyle='#9ba9bb55';ctx.beginPath();ctx.moveTo(W*.5,0);ctx.lineTo(W*.5,H);ctx.moveTo(0,H*.5);ctx.lineTo(W,H*.5);ctx.stroke();
+  if(st.theme==='tokyo'){ctx.fillStyle='#b9c7d655';ctx.fillRect(0,0,W,H);ctx.fillStyle='#e2e8f055';for(let i=0;i<8;i++)ctx.fillRect((i*59)%W,(i*83)%H,35,2)}
+ }else if(st.theme==='ocean'){
+  ctx.strokeStyle=c[1];ctx.lineWidth=2;for(let y=15;y<H;y+=25){ctx.beginPath();for(let x=0;x<=W;x+=12){let yy=y+Math.sin((x+y)*.035)*4;x?ctx.lineTo(x,yy):ctx.moveTo(x,yy)}ctx.stroke()}
+  ctx.fillStyle=c[2];for(let i=0;i<8;i++){ctx.fillRect((i*47)%W,(i*71)%H,3,3)}
+ }else if(st.theme==='summit'){
+  ctx.fillStyle=c[1];for(let i=0;i<7;i++){let x=i*62-15;ctx.beginPath();ctx.moveTo(x,H);ctx.lineTo(x+42,40+(i%3)*18);ctx.lineTo(x+90,H);ctx.fill()}
+  ctx.fillStyle=c[2];ctx.fillRect(W*.36,H*.18,W*.28,10);ctx.fillRect(W*.39,H*.18,7,60);ctx.fillRect(W*.59,H*.18,7,60);
+ }else{
+  ctx.fillStyle=c[1];for(let i=0;i<70;i++){let x=(i*47)%W,y=(i*83)%H;ctx.fillRect(x,y,2,2)}
+  ctx.strokeStyle='#a08bd855';for(let i=0;i<7;i++){ctx.beginPath();ctx.moveTo(0,i*74);ctx.lineTo(W,(i*74+40)%H);ctx.stroke()}
+ }
+}
+function draw(){ctx.clearRect(0,0,W,H);drawMap();
+gems.forEach(g=>{ctx.fillStyle=g.v===2?'#ffdc70':'#73e8d9';ctx.fillRect(g.x-4,g.y-4,8,8);ctx.fillStyle='#fff';ctx.fillRect(g.x-1,g.y-3,2,2)});
+shots.forEach(s=>{ctx.fillStyle=selected==='gabumon'?'#9eeeff':'#ffb24d';ctx.fillRect(s.x-3,s.y-3,7,7)});
+enemies.forEach(e=>{ctx.fillStyle=e.type==='바이러스'?'#a85b83':e.type==='데이터'?'#4d9cba':'#7e9a72';if(e.big)ctx.fillStyle='#bd5275';ctx.fillRect(e.x-e.r,e.y-e.r,e.r*2,e.r*2);ctx.fillStyle='#dfe7f1';ctx.fillRect(e.x-5,e.y-3,3,3);ctx.fillRect(e.x+2,e.y-3,3,3);ctx.fillStyle='#fff';ctx.font='bold 7px system-ui';ctx.fillText(e.type==='백신'?'V':e.type==='데이터'?'D':'X',e.x-2,e.y+e.r+8);ctx.fillStyle='#e65e66';ctx.fillRect(e.x-e.r,e.y-e.r-5,e.r*2,3);ctx.fillStyle='#6bd18b';ctx.fillRect(e.x-e.r,e.y-e.r-5,e.r*2*e.hp/e.max,3)});
+if(boss){
+ const bx=Math.round(boss.x),by=Math.round(boss.y),pal=['#6f4b87','#b47a3e','#6d3d72','#4b91a8','#9a7652','#9aa8b4','#805b9e','#b74d7e'];
+ ctx.save();ctx.translate(bx,by);ctx.fillStyle='#182238';
+ if(stageIndex===0){ctx.fillRect(-14,-10,28,27);ctx.fillRect(-22,-18,9,23);ctx.fillRect(13,-18,9,23);ctx.fillRect(-8,-20,16,10);ctx.fillStyle='#e5c6f4';ctx.fillRect(-18,-20,8,3);ctx.fillRect(10,-20,8,3)}
+ else if(stageIndex===1){ctx.fillRect(-17,-13,34,25);ctx.fillRect(-12,-21,24,10);ctx.fillStyle='#f4d16b';ctx.fillRect(-13,-10,26,7);ctx.fillStyle='#1c2430';ctx.fillRect(-10,-9,7,5);ctx.fillRect(3,-9,7,5)}
+ else if(stageIndex===2){ctx.fillRect(-17,-14,34,29);ctx.fillRect(-11,-23,22,12);ctx.fillRect(-24,-4,8,25);ctx.fillRect(16,-4,8,25);ctx.fillStyle='#f4d7ff';ctx.fillRect(-9,-17,6,4);ctx.fillRect(4,-17,6,4);ctx.fillStyle='#a33e76';ctx.fillRect(-22,12,44,7)}
+ else if(stageIndex===3){ctx.fillRect(-22,-7,44,14);ctx.fillRect(-14,-15,27,10);ctx.fillRect(-5,-20,14,7);ctx.fillRect(17,-2,14,5);ctx.fillRect(25,0,8,4);ctx.fillStyle='#b8eaff';ctx.fillRect(-8,-13,5,3);ctx.fillRect(5,-13,5,3)}
+ else if(stageIndex===4){ctx.fillRect(-12,-14,24,25);ctx.fillRect(-8,-23,16,11);ctx.fillRect(-23,-5,11,5);ctx.fillRect(12,-5,11,5);ctx.fillRect(-18,10,7,14);ctx.fillRect(11,10,7,14);ctx.fillStyle='#e9c48b';ctx.fillRect(-6,-18,4,4);ctx.fillRect(3,-18,4,4)}
+ else if(stageIndex===5){ctx.fillRect(-19,-16,38,31);ctx.fillRect(-24,-9,8,19);ctx.fillRect(16,-9,8,19);ctx.fillRect(-12,-24,24,10);ctx.fillRect(-15,15,9,10);ctx.fillRect(7,15,9,10);ctx.fillStyle='#f4d47a';ctx.fillRect(-10,-15,6,5);ctx.fillRect(4,-15,6,5)}
+ else if(stageIndex===6){ctx.fillRect(-13,-14,26,27);ctx.fillRect(-9,-24,18,12);ctx.fillRect(-23,-18,10,28);ctx.fillRect(13,-18,10,28);ctx.fillStyle='#ffe2a1';ctx.fillRect(-7,-19,5,4);ctx.fillRect(3,-19,5,4);ctx.fillStyle='#a64d8c';ctx.fillRect(-21,12,42,8)}
+ else{ctx.fillRect(-17,-16,34,31);ctx.fillRect(-11,-26,22,12);for(let i=0;i<5;i++){ctx.fillRect(-24+i*12,-24-(i%2)*5,5,12)}ctx.fillStyle='#ff8ec3';ctx.fillRect(-9,-17,6,5);ctx.fillRect(4,-17,6,5);ctx.fillStyle='#a9a1ff';ctx.fillRect(-25,11,50,7)}
+ ctx.fillStyle=pal[stageIndex];ctx.fillRect(-boss.r,-boss.r,boss.r*2,4);ctx.restore();
+ ctx.fillStyle='#f05e78';ctx.fillRect(boss.x-boss.r,boss.y-boss.r-9,boss.r*2,4);ctx.fillStyle='#7be09b';ctx.fillRect(boss.x-boss.r,boss.y-boss.r-9,boss.r*2*boss.hp/boss.max,4);ctx.fillStyle='#fff';ctx.font='bold 11px system-ui';ctx.fillText('BOSS '+boss.name,Math.max(8,boss.x-38),boss.y-boss.r-15)
+}
+if(upgrades.orbit){ctx.strokeStyle='#ffe48a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(player.x,player.y,35,0,Math.PI*2);ctx.stroke()}
+if(player.inv<=0||Math.floor(performance.now()/90)%2===0)pixelDino(player.x,player.y,player.type==='바이러스'?'#a95b85':player.type==='데이터'?'#66b8c9':player.type==='프리'?'#c4d6e8':chars[selected].color,1.7+Math.min(.35,player.evo*.035));
+particles.forEach(p=>{ctx.fillStyle='#ffe6a0';ctx.fillRect(p.x,p.y,3,3)});if(toastTimer>0){toastTimer-=1/60;ctx.fillStyle='#111c';ctx.fillRect(12,H-54,W-24,34);ctx.fillStyle='#ffe28a';ctx.font='bold 13px system-ui';ctx.textAlign='center';ctx.fillText(toastMessage,W/2,H-33);ctx.textAlign='left'}
+ctx.fillStyle='#fff';ctx.font='bold 11px system-ui';ctx.fillText('STAGE '+(stageIndex+1)+' / '+stages.length+' · '+stages[stageIndex].zone,10,17);
+}
+function hud(){let c=chars[selected];$('charName').textContent=player.form+' Lv.'+level+' · '+stages[stageIndex].name;$('evoName').textContent=player.type+' 속성 · 진화 '+player.evo+'회';let nearest=enemies.reduce((a,b)=>!a||Math.hypot(b.x-player.x,b.y-player.y)<Math.hypot(a.x-player.x,a.y-player.y)?b:a,null);let mult=nearest?typeMultiplier(player.type,nearest.type):1;$('typeHint').textContent=nearest?(mult>1?'상성 유리 ×'+mult.toFixed(2):mult<1?'상성 불리 ×'+mult.toFixed(2):'상성 보통'):'백신 > 바이러스 > 데이터 > 백신';$('stats').textContent='처치 '+kills+' · '+fmt(elapsed);$('hpFill').style.width=clamp(player.hp/player.maxHp*100,0,100)+'%';$('hpText').textContent=Math.max(0,Math.ceil(player.hp))+' / '+player.maxHp;$('xpFill').style.width=xp/xpNeed*100+'%';$('xpText').textContent=xp+' / '+xpNeed;$('coinText').textContent='디지코어 '+(coins+runCoins);$('special').innerHTML='필살기<br>충전 '+Math.floor(special)+'%'}
+function fmt(t){return String(Math.floor(t/60)).padStart(2,'0')+':'+String(Math.floor(t%60)).padStart(2,'0')}
+function loop(now){if(!running)return;let dt=Math.min(.04,(now-last)/1000||0);last=now;if(!paused)update(dt);draw();hud();if(running)requestAnimationFrame(loop)}
+function endRun(){running=false;coins+=runCoins+Math.floor(elapsed/20);localStorage.setItem('digiPerm',JSON.stringify(perm));$('resultText').textContent='생존 시간 '+fmt(elapsed)+' · 처치 '+kills+' · 획득 디지코어 '+(runCoins+Math.floor(elapsed/20));$('gameover').classList.remove('hidden')}
+function completeStage(){
+ running=false;boss=null;runCoins+=30;coins+=runCoins;runCoins=0;
+ if(stageIndex<stages.length-1){maxStageUnlocked=Math.max(maxStageUnlocked,stageIndex+1);localStorage.setItem('digiMaxStage',String(maxStageUnlocked));$('clearTitle').textContent='STAGE CLEAR!';$('clearText').textContent=stages[stageIndex].name+'의 보스 '+stages[stageIndex].boss+' 격파! 보상 디지코어를 획득했어. 다음 지역이 해금됐어.';$('nextStageBtn').textContent='다음 스테이지: '+stages[stageIndex+1].name;$('nextStageBtn').style.display='block';}
+ else{$('clearTitle').textContent='DIGITAL WORLD SAVED!';$('clearText').textContent='아포카리몬을 격파했어. 디지몬 어드벤처 메인 스토리 코스를 모두 클리어했어!';$('nextStageBtn').textContent='최종 스테이지 다시 도전';$('nextStageBtn').style.display='block';}
+ $('stageclear').classList.remove('hidden');renderStageList();
+}
+function continueCampaign(){
+ if(stageIndex<stages.length-1){
+  stageIndex++;enemies=[];shots=[];gems=[];particles=[];boss=null;elapsed=0;spawn=0;fire=0;bossClock=42;player.x=W/2;player.y=H/2;player.hp=Math.min(player.maxHp,player.hp+Math.ceil(player.maxHp*.45));hideAll();running=true;last=performance.now();renderStageList();requestAnimationFrame(loop);
+ }else{stageIndex=0;reset()}
+}
+$('nextStageBtn').onclick=continueCampaign;
+$('stageSelectBtn').onclick=()=>{$('stageclear').classList.add('hidden');$('start').classList.remove('hidden');renderStageList()};
+$('special').onclick=()=>{if(!running||special<100)return;special=0;const radius=selected==='patamon'?190:selected==='gabumon'?125:155;const dmg=selected==='agumon'?125:selected==='gabumon'?95:80;enemies.forEach(e=>{if(Math.hypot(e.x-player.x,e.y-player.y)<radius)e.hp-=dmg*typeMultiplier(player.type,e.type)});if(boss&&Math.hypot(boss.x-player.x,boss.y-player.y)<radius+boss.r)boss.hp-=dmg*typeMultiplier(player.type,boss.type)*1.8;for(let i=0;i<18;i++){let a=i/18*Math.PI*2;particles.push({x:player.x+Math.cos(a)*35,y:player.y+Math.sin(a)*35,vx:Math.cos(a)*90,vy:Math.sin(a)*90,life:.5})}};
+function openLab(){$('gameover').classList.add('hidden');$('lab').classList.remove('hidden');$('labCoins').textContent='보유 디지코어: '+coins}
+$('labBtn').onclick=openLab;$('labClose').onclick=()=>{$('lab').classList.add('hidden');$('start').classList.remove('hidden')};
+function buy(stat,cost){if(coins<cost){$('labCoins').textContent='디지코어가 부족해. 보유량: '+coins;return}coins-=cost;perm[stat]++;localStorage.setItem('digiPerm',JSON.stringify(perm));$('labCoins').textContent='보유 디지코어: '+coins}
+$('buyHp').onclick=()=>buy('hp',10);$('buyPower').onclick=()=>buy('power',12);$('buySpeed').onclick=()=>buy('speed',10);
+function openCodex(){const list=$('codexList');list.innerHTML='';const all=[...discovered].sort();if(!all.length)list.innerHTML='<p>아직 발견한 디지몬이 없어.</p>';all.forEach(n=>{const row=document.createElement('button');row.textContent='◆ '+n+' · 도감 등록';list.appendChild(row)});$('start').classList.add('hidden');$('codex').classList.remove('hidden')}
+$('codexBtn').onclick=openCodex;$('codexClose').onclick=()=>{$('codex').classList.add('hidden');$('start').classList.remove('hidden')};
+let stick=$('stick'),nub=$('nub'),activeTouch=null;
+function setStick(e){let r=stick.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,d=Math.hypot(dx,dy),max=37;if(d>max){dx=dx/d*max;dy=dy/d*max}move={x:dx/max,y:dy/max};nub.style.transform=`translate(${dx}px,${dy}px)`}
+stick.addEventListener('pointerdown',e=>{activeTouch=e.pointerId;stick.setPointerCapture(e.pointerId);setStick(e)});
+stick.addEventListener('pointermove',e=>{if(activeTouch===e.pointerId)setStick(e)});
+function release(e){if(activeTouch===e.pointerId){activeTouch=null;move={x:0,y:0};nub.style.transform='translate(0,0)'}}
+stick.addEventListener('pointerup',release);stick.addEventListener('pointercancel',release);
+document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')move.x=-1;if(e.key==='ArrowRight'||e.key==='d')move.x=1;if(e.key==='ArrowUp'||e.key==='w')move.y=-1;if(e.key==='ArrowDown'||e.key==='s')move.y=1});
+document.addEventListener('keyup',()=>{move={x:0,y:0}});
+})();
+</script>
+</body></html>
