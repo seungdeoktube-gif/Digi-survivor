@@ -31,7 +31,16 @@ button:active{transform:scale(.97)}.primary{background:#d17a35;border-color:#ffc
 #stick{position:fixed;left:22px;bottom:calc(82px + env(safe-area-inset-bottom));width:116px;height:116px;border-radius:50%;background:#d8e7ff20;border:2px solid #d8e7ff70;z-index:3;touch-action:none}
 #nub{position:absolute;left:35px;top:35px;width:42px;height:42px;border-radius:50%;background:#e8f2ff99;border:2px solid #fff}
 #special{position:fixed;right:22px;bottom:calc(96px + env(safe-area-inset-bottom));width:74px;height:74px;border-radius:50%;background:#a34b37;border:3px solid #ffc17c;z-index:3;font-size:11px}
+#fullscreenBtn{position:fixed;top:calc(8px + env(safe-area-inset-top));right:10px;z-index:7;padding:8px 11px;font-size:11px;background:#344b70dd;border-color:#9bb3d8}
+body.immersive #wrap{position:fixed;inset:0;width:100%;height:100dvh;max-width:none;z-index:1}
+body.immersive header,body.immersive #bottom{display:none}
+body.immersive #hud{position:absolute;top:env(safe-area-inset-top);left:0;right:0;z-index:2;background:#172238bb;padding:6px 110px 6px 10px;backdrop-filter:blur(4px)}
+body.immersive #stick{width:140px;height:140px;left:18px;bottom:calc(18px + env(safe-area-inset-bottom))}
+body.immersive #nub{left:44px;top:44px;width:52px;height:52px}
+body.immersive #special{width:86px;height:86px;right:18px;bottom:calc(28px + env(safe-area-inset-bottom));font-size:12px}
+body.immersive #fullscreenBtn{top:calc(8px + env(safe-area-inset-top));right:10px}
 @media(min-width:700px){#stick{left:calc(50% - 390px);bottom:calc(90px + env(safe-area-inset-bottom))}#special{right:calc(50% - 390px)}}
+@media(min-width:700px){body.immersive #stick{left:24px;bottom:24px}body.immersive #special{right:24px;bottom:30px}}
 </style>
 </head>
 <body>
@@ -48,6 +57,7 @@ button:active{transform:scale(.97)}.primary{background:#d17a35;border-color:#ffc
 <canvas id="game"></canvas>
 <div id="bottom"><span class="pill">자동 공격</span><span class="pill">속성 상성</span><span class="pill" id="coinText">디지코어 0</span></div>
 </div>
+<button id="fullscreenBtn" aria-label="전체 화면 전환">⛶ 전체 화면</button>
 <div id="stick"><div id="nub"></div></div><button id="special">필살기<br>충전 0%</button>
 <div class="overlay" id="start">
  <div class="panel">
@@ -486,6 +496,19 @@ stick.addEventListener('pointerdown',e=>{activeTouch=e.pointerId;stick.setPointe
 stick.addEventListener('pointermove',e=>{if(activeTouch===e.pointerId)setStick(e)});
 function release(e){if(activeTouch===e.pointerId){activeTouch=null;move={x:0,y:0};nub.style.transform='translate(0,0)'}}
 stick.addEventListener('pointerup',release);stick.addEventListener('pointercancel',release);
+function syncFullscreenButton(){const active=document.body.classList.contains('immersive')||!!document.fullscreenElement;$('fullscreenBtn').textContent=active?'⤢ 기본 화면':'⛶ 전체 화면';}
+$('fullscreenBtn').addEventListener('click',async()=>{
+ const active=document.body.classList.contains('immersive');
+ if(active){
+  if(document.fullscreenElement&&document.exitFullscreen){try{await document.exitFullscreen()}catch(e){}}
+  document.body.classList.remove('immersive');
+ }else{
+  document.body.classList.add('immersive');
+  if(document.documentElement.requestFullscreen){try{await document.documentElement.requestFullscreen()}catch(e){}}
+ }
+ syncFullscreenButton();
+});
+document.addEventListener('fullscreenchange',syncFullscreenButton);
 document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')move.x=-1;if(e.key==='ArrowRight'||e.key==='d')move.x=1;if(e.key==='ArrowUp'||e.key==='w')move.y=-1;if(e.key==='ArrowDown'||e.key==='s')move.y=1});
 document.addEventListener('keyup',()=>{move={x:0,y:0}});
 })();
