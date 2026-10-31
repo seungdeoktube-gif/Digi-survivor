@@ -89,11 +89,11 @@ function makePartner(id){
  if(id==='tentomon'){part(g,1.15,.85,1.05,body,0,.88,0);part(g,.82,.65,.75,accent,0,1.48,.05);part(g,.45,.3,.3,belly,0,1.15,.43);part(g,.15,.18,.08,eye,-.2,1.58,.39);part(g,.15,.18,.08,eye,.2,1.58,.39);part(g,.18,.45,.18,leg,-.55,.28,.18);part(g,.18,.45,.18,leg,.55,.28,.18);part(g,.18,.45,.18,leg,-.55,.28,-.18);part(g,.18,.45,.18,leg,.55,.28,-.18);part(g,.18,.55,.18,accent,-.22,2.02,-.05,0,-.4);part(g,.18,.55,.18,accent,.22,2.02,-.05,0,.4)}
  // Eyes, feet and a clear species-specific silhouette.
  if(id!=='agumon'){part(g,.3,.12,.2,claw,-.32,.12,.12);part(g,.3,.12,.2,claw,.32,.12,.12)}
- g.userData.species=id;return g;
+ g.userData.species=id;g.children.forEach((o,i)=>{o.userData.animBase={x:o.rotation.x,y:o.rotation.y,z:o.rotation.z,phase:i*.83};});return g;
 }
 const player=makePartner(selected);scene.add(player);player.position.y=0;
 const enemyLooks={grunt:{skin:mat(0x8752a6),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xff6e8a,.3,.15)},runner:{skin:mat(0x73b84f),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xff6e8a,.3,.15)},brute:{skin:mat(0x8b3c32),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xff6e8a,.3,.15)},boss:{skin:mat(0x44334f),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xffdf66,.3,.15)}};
-const hitMaterial=mat(0xffb1a5),orbMaterial=mat(0x52e4d4,.3,.25);
+const hitMaterial=mat(0xffb1a5),orbMaterial=mat(0x52e4d4,.3,.25),bossShotMaterial=mat(0xff416b,.3,.2);
 function makeEnemy(forceBoss=false){
  const g=new THREE.Group(),roll=Math.random(),boss=forceBoss;
  const type=boss?'boss':roll<.24?'runner':roll<.43?'brute':'grunt';
@@ -131,9 +131,9 @@ function makeEnemy(forceBoss=false){
  g.scale.setScalar(type==='boss'?1.12:1);
  return g;
 }
-function makeProjectile(){const m=new THREE.Mesh(new THREE.SphereGeometry(.2,12,10),attackMats[selected]);scene.add(m);return m}
+function makeProjectile(){const geo=selected==='gabumon'?new THREE.OctahedronGeometry(.23,0):selected==='biyomon'?new THREE.ConeGeometry(.2,.48,8):selected==='tentomon'?new THREE.TetrahedronGeometry(.25):selected==='patamon'?new THREE.TorusGeometry(.17,.07,6,12):new THREE.SphereGeometry(.22,12,10);const m=new THREE.Mesh(geo,attackMats[selected]);scene.add(m);return m}
 function addBurst(pos,color=0xffc36b,count=7){for(let i=0;i<count;i++){const material=fxMats[i%fxMats.length];const m=new THREE.Mesh(new THREE.SphereGeometry(.07+Math.random()*.06,6,5),material);m.position.copy(pos);scene.add(m);const v=new THREE.Vector3((Math.random()-.5)*5,Math.random()*3,(Math.random()-.5)*5);effects.push({mesh:m,vel:v,life:.35+Math.random()*.3,max:.65})}}
-function launchBossShot(boss){const m=new THREE.Mesh(new THREE.SphereGeometry(.27,12,10),mat(0xff416b,.3,.2));m.position.copy(boss.position).add(new THREE.Vector3(0,1.2,0));scene.add(m);const dir=player.position.clone().add(new THREE.Vector3(0,.8,0)).sub(m.position).normalize();enemyShots.push({mesh:m,vel:dir.multiplyScalar(7.2),life:4,damage:13})}
+function launchBossShot(boss){const m=new THREE.Mesh(new THREE.SphereGeometry(.27,12,10),bossShotMaterial);m.position.copy(boss.position).add(new THREE.Vector3(0,1.2,0));scene.add(m);const dir=player.position.clone().add(new THREE.Vector3(0,.8,0)).sub(m.position).normalize();enemyShots.push({mesh:m,vel:dir.multiplyScalar(7.2),life:4,damage:13})}
 function addShockwave(boss){const ring=new THREE.Mesh(new THREE.TorusGeometry(1,.12,8,40),new THREE.MeshBasicMaterial({color:0xff526e,transparent:true,opacity:.85}));ring.rotation.x=Math.PI/2;ring.position.set(boss.position.x,.16,boss.position.z);scene.add(ring);effects.push({mesh:ring,vel:new THREE.Vector3(),life:.8,max:.8,shock:true,boss});}
 const enemies=[],shots=[],enemyShots=[],orbs=[],effects=[];
 const attackMats={agumon:mat(0xff9b3d,.35,.15),gabumon:mat(0x83dfff,.35,.15),patamon:mat(0xffe29a,.35,.15),biyomon:mat(0xff765e,.35,.15),tentomon:mat(0xffe15a,.35,.15)};
@@ -205,7 +205,7 @@ for(let i=enemyShots.length-1;i>=0;i--){const s=enemyShots[i];s.life-=dt;s.mesh.
 for(let i=effects.length-1;i>=0;i--){const fx=effects[i];fx.life-=dt;if(fx.shock){const t=1-fx.life/fx.max;fx.mesh.scale.setScalar(1+t*8);fx.mesh.material.opacity=Math.max(0,fx.life/fx.max);if(fx.life<=0&&player.position.distanceTo(fx.boss.position)<7&&invuln<=0){hp-=18;invuln=.7;toast('충격파 피격!');if(hp<=0){scene.remove(fx.mesh);effects.splice(i,1);endRun();return}}}else{fx.mesh.position.addScaledVector(fx.vel,dt);fx.vel.y-=5*dt;fx.mesh.scale.multiplyScalar(.985)}if(fx.life<=0){scene.remove(fx.mesh);effects.splice(i,1)}}
 collect(dt);ultimate=Math.min(100,ultimate+dt*1.15);
 camera.position.lerp(new THREE.Vector3(player.position.x,16,player.position.z+19),.08);camera.lookAt(player.position.x,0,player.position.z);
-player.position.y=Math.sin(elapsed*6)*.055;player.rotation.z=THREE.MathUtils.lerp(player.rotation.z,-move.x*.12,.16);player.rotation.x=THREE.MathUtils.lerp(player.rotation.x,move.y*.07,.16);
+player.position.y=Math.sin(elapsed*6)*.055;player.rotation.z=THREE.MathUtils.lerp(player.rotation.z,-move.x*.12,.16);player.rotation.x=THREE.MathUtils.lerp(player.rotation.x,move.y*.07,.16);for(const o of player.children){const b=o.userData.animBase;if(!b){o.userData.animBase={x:o.rotation.x,y:o.rotation.y,z:o.rotation.z,phase:Math.random()*6.28};continue}const swing=Math.sin(elapsed*10+b.phase);if(o.position.y<.48)o.rotation.x=b.x+swing*.24;else if(Math.abs(o.position.x)>.58)o.rotation.z=b.z+swing*.12;else o.rotation.z=THREE.MathUtils.lerp(o.rotation.z,b.z,.2)}
 const boss=enemies.find(e=>e.userData.boss);$('bossHud').style.display=boss?'block':'none';if(boss)$('bossFill').style.width=Math.max(0,boss.userData.hp/boss.userData.maxHp*100)+'%';
 $('timer').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(Math.floor(elapsed%60)).padStart(2,'0');
 $('hpLabel').textContent='HP '+Math.max(0,Math.ceil(hp))+' / '+maxHp;$('hpFill').style.width=Math.max(0,hp/maxHp*100)+'%';$('killLabel').textContent='처치 '+kills;$('levelLabel').textContent='Lv. '+level+' · '+(evolved?'성숙기 데이터':'성장기 데이터');$('xpLabel').textContent=xp+' / '+xpNeed;$('xpFill').style.width=xp/xpNeed*100+'%';$('ultimate').textContent='필살기\n'+Math.floor(ultimate)+'%';$('ultimate').disabled=ultimate<100;
