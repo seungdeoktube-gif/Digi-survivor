@@ -355,82 +355,106 @@ enemies=enemies.filter(e=>{if(e.hp<=0){kills++;career.kills++;if(career.kills%10
 gems.forEach(g=>{if(!running)return;g.life=(g.life??24)-dt;let dx=player.x-g.x,dy=player.y-g.y,d=Math.hypot(dx,dy);if(d<85+upgrades.magnet*45){g.x+=dx/(d||1)*220*dt;g.y+=dy/(d||1)*220*dt}if(d<player.r+8){g.got=true;xp+=g.v;if(xp>=xpNeed){xp-=xpNeed;level++;career.maxLevel=Math.max(career.maxLevel,level);checkAchievements();xpNeed=Math.floor(xpNeed*1.35+2);if(!checkEvolution())levelUp()}}});gems=gems.filter(g=>!g.got&&g.life>0);
 particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);if(particles.length>180)particles.splice(0,particles.length-180);
 }
-function pixelDino(x,y,color,scale=2){
- // Original, compact pixel-art silhouettes; forms evolve visually by stage and family.
- const f=player?player.form:'';const family=selected;const t=animTime||0;const bob=Math.sin(t*8)*1.2;
+function pixelDino(x,y,color,scale=2.15){
+ const f=player?player.form:'';const family=selected;const bob=Math.sin((animTime||0)*8)*.8;
  ctx.save();ctx.translate(Math.round(x),Math.round(y+bob));ctx.scale(scale,scale);
+ const ink='#171b27',shade='#39445a',white='#fff4d9';
  const px=(xx,yy,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(xx),Math.round(yy),w,h)};
- px(-9,7,18,3,'#1b2635');
- if(family==='agumon'||/그레이몬|워그레이몬|오메가몬|티라노|마메몬|데블몬|피에몬/.test(f)){
-   px(-7,-6,14,12,color);px(-5,-11,10,6,color);px(-10,-11,4,7,color);px(6,-11,4,7,color);
-   px(-4,-13,3,4,'#f4c46b');px(3,-13,3,4,'#f4c46b');px(2,-8,3,3,'#fff');px(3,-7,1,1,'#182238');px(-5,1,10,4,'#f3d8a2');
-   px(-6,6,4,4,'#303d50');px(3,6,4,4,'#303d50');px(7,1,5,2,'#d58b39');
-   if(/그레이몬|워그레이몬|메탈그레이몬/.test(f)){px(-10,-15,4,5,'#e9e1c9');px(6,-15,4,5,'#e9e1c9');px(-12,-2,4,7,'#d9dfe8');px(8,-2,4,7,'#d9dfe8')}
-   if(/메탈|오메가/.test(f)){px(-9,0,5,7,'#aab7c7');px(5,0,5,7,'#aab7c7');px(-2,-14,5,3,'#d8e0e9')}
- }else if(family==='gabumon'||/가루몬|즈드/.test(f)){
-   px(-8,-5,16,11,color);px(-6,-10,12,6,color);px(-9,-14,5,7,'#d8dce5');px(4,-14,5,7,'#d8dce5');px(-7,-9,14,5,'#f4f0df');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-4,-2,8,5,'#d7c99c');px(-6,6,4,4,'#34435a');px(3,6,4,4,'#34435a');
-   if(/워가루몬|메탈가루몬/.test(f)){px(-11,-2,4,9,'#d9e0eb');px(8,-2,4,9,'#d9e0eb');px(-3,-13,6,3,'#9feaff')}
+ const part=(xx,yy,w,h,c)=>{px(xx-1,yy-1,w+2,h+2,ink);px(xx,yy,w,h,c)};
+ const eye=(xx,yy,iris='#26334a')=>{px(xx-1,yy-1,4,4,white);px(xx,yy,2,3,iris);px(xx,yy,1,1,'#fff')};
+ const shadow=()=>{px(-10,12,20,2,'#111923');px(-7,11,14,1,'#687386')};
+ shadow();
+ // A compact, individually shaped silhouette for every playable partner.
+ if(family==='agumon'||/그레이몬|티라노몬|데블몬|마메몬|피에몬|오메가몬|워그레이몬/.test(f)){
+  part(-7,-6,14,12,color);part(-5,-12,12,8,color);part(4,-9,7,5,color);part(8,-6,5,3,'#e99a35');
+  part(-8,-12,4,6,color);part(5,-16,3,6,'#f4c94f');part(-3,-15,3,4,'#f4c94f');
+  part(-6,5,4,6,'#d88b32');part(3,5,4,6,'#d88b32');part(7,1,7,2,'#b96d2b');
+  px(-5,0,10,4,'#f3d8a2');eye(-3,-9,'#278b48');px(2,-1,5,1,ink);
+  part(-10,-2,3,6,'#e7a33c');part(-12,-4,3,3,'#f5cf64');
+  if(/그레이몬|티라노몬/.test(f)){part(-9,-17,5,7,'#e8dfc9');part(5,-18,5,8,'#e8dfc9');part(-11,-2,4,8,'#c8d0d8');part(8,-2,4,8,'#c8d0d8')}
+  if(/메탈|오메가|워그레이몬/.test(f)){part(-10,0,5,8,'#aebdce');part(6,0,5,8,'#aebdce');part(-4,-15,9,4,'#dce6f2');part(-11,4,4,4,'#f2c85b')}
+ }else if(family==='gabumon'){
+  part(-8,-5,16,11,color);part(-6,-12,13,8,'#eee9d8');part(-11,-13,5,9,'#d9e0e8');part(6,-13,5,9,'#d9e0e8');
+  part(-9,-7,4,9,'#536a9a');part(5,-7,4,9,'#536a9a');part(-5,-2,10,7,'#f1d78d');
+  part(-6,5,5,6,'#e7d9b9');part(3,5,5,6,'#e7d9b9');part(-2,-16,5,4,'#e4bd53');
+  eye(-4,-9,'#a34d37');part(8,1,5,3,'#536a9a');px(-2,1,5,1,ink);
+  if(/가루몬|워가루몬|즈드/.test(f)){part(-12,-3,5,9,'#dbe3ee');part(8,-3,5,9,'#dbe3ee');part(-2,-17,5,3,'#9eeaff')}
  }else if(family==='patamon'){
-   px(-8,-5,16,12,color);px(-6,-11,12,8,color);px(-15,-9,8,14,'#e7b879');px(7,-9,8,14,'#e7b879');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-2,6,3,'#f3d8b5');px(-6,7,5,4,'#d9a46a');px(2,7,5,4,'#d9a46a');
-   if(/엔젤|홀리|세라피/.test(f)){px(-12,-15,5,8,'#fff2b8');px(8,-15,5,8,'#fff2b8');px(-15,0,5,9,'#fff0d5');px(10,0,5,9,'#fff0d5')}
+  part(-8,-5,16,13,color);part(-6,-12,12,8,color);part(-15,-9,7,13,'#e6b66e');part(8,-9,7,13,'#e6b66e');
+  part(-12,-12,5,5,'#f5d28d');part(8,-12,5,5,'#f5d28d');part(-5,6,5,6,'#dba65f');part(2,6,5,6,'#dba65f');
+  eye(-4,-9,'#4b9bc7');px(-2,0,5,2,'#f6d9b4');
+  if(/엔젤|홀리|세라피/.test(f)){part(-14,-16,5,7,'#fff2c4');part(9,-16,5,7,'#fff2c4');part(-16,0,5,9,'#fff5dc');part(11,0,5,9,'#fff5dc')}
  }else if(family==='biyomon'){
-   px(-7,-5,14,12,color);px(-5,-11,10,7,color);px(-11,-10,5,9,'#f6b2a8');px(6,-10,5,9,'#f6b2a8');px(-3,-14,6,5,'#f7d36e');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-2,-2,5,4,'#f5c65e');px(-5,7,4,4,'#d75e57');px(2,7,4,4,'#d75e57');
-   if(/버드라몬|가루다몬/.test(f)){px(-14,-5,6,11,'#e85e54');px(8,-5,6,11,'#e85e54')}
+  part(-7,-4,14,13,color);part(-5,-12,11,8,color);part(-12,-8,6,11,'#f5b0a8');part(7,-8,6,11,'#f5b0a8');
+  part(-3,-17,6,7,'#f5d36a');part(-1,-19,3,4,'#f5d36a');part(-4,7,5,5,'#d65f58');part(2,7,5,5,'#d65f58');
+  part(-2,-1,6,4,'#f5c65e');eye(-4,-9,'#3d83a4');px(1,-1,3,2,'#d94f4c');
+  if(/버드라몬|가루다몬|피닉스/.test(f)){part(-16,-5,7,12,'#d9574f');part(9,-5,7,12,'#d9574f');part(-4,-19,3,4,'#ffdf8b')}
  }else if(family==='tentomon'){
-   px(-8,-4,16,12,color);px(-6,-11,12,8,color);px(-13,-12,6,12,'#e6bd68');px(7,-12,6,12,'#e6bd68');px(-4,-14,3,5,'#343b4d');px(2,-14,3,5,'#343b4d');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-5,7,4,4,'#343b4d');px(2,7,4,4,'#343b4d');
-   if(/카부테리몬|아트라카부테리몬/.test(f)){px(-11,-16,22,5,'#d9e2ef');px(-2,-20,4,7,'#f2d36f')}
+  part(-8,-4,16,13,'#e7b64c');part(-6,-12,12,8,'#d8a443');part(-13,-10,6,12,'#d8a443');part(7,-10,6,12,'#d8a443');
+  part(-5,-15,10,5,'#b94f50');part(-3,-19,3,5,'#333b50');part(1,-19,3,5,'#333b50');
+  part(-5,7,4,5,'#8c4b3d');part(2,7,4,5,'#8c4b3d');eye(-4,-9,'#4b8b58');eye(3,-9,'#4b8b58');
+  part(-15,-1,4,7,'#d4a64b');part(11,-1,4,7,'#d4a64b');
+  if(/캅테리|헤라클레스/.test(f)){part(-12,-18,24,5,'#c8d7e5');part(-3,-23,6,7,'#e8d16e');part(-16,-3,5,10,'#c6d4e2');part(12,-3,5,10,'#c6d4e2')}
  }else if(family==='palmon'){
-   px(-7,-4,14,13,color);px(-5,-9,10,8,color);px(-10,-15,7,8,'#6abf72');px(-3,-17,7,9,'#8edb7e');px(4,-14,7,8,'#55a95e');px(-5,-7,3,3,'#fff');px(3,-7,3,3,'#fff');px(-3,-1,6,3,'#f1d7b0');px(-5,8,4,4,'#e4c08c');px(2,8,4,4,'#e4c08c');
-   if(/릴리몬|로제몬/.test(f)){px(-11,-17,5,7,'#f5a6c7');px(7,-17,5,7,'#f5a6c7')}
+  part(-7,-4,14,13,color);part(-5,-11,10,8,'#79c96f');part(-11,-15,7,8,'#55a75d');part(-4,-19,8,10,'#8edb7b');part(4,-15,7,8,'#55a75d');
+  part(-5,7,4,5,'#d5b477');part(2,7,4,5,'#d5b477');part(-2,-1,6,4,'#f1d7ae');eye(-4,-9,'#398c55');
+  part(-13,-3,5,8,'#65b965');part(9,-3,5,8,'#65b965');
+  if(/니드몬|릴리몬|로제몬/.test(f)){part(-13,-18,6,6,'#f5a5c5');part(8,-18,6,6,'#f5a5c5');part(-3,-22,6,5,'#f5d56b')}
  }else if(family==='gomamon'){
-   px(-8,-4,16,12,color);px(-6,-10,12,8,color);px(-12,-7,5,7,'#f5f5f5');px(7,-7,5,7,'#f5f5f5');px(-5,-7,3,3,'#fff');px(3,-7,3,3,'#fff');px(-3,-1,6,4,'#e7a6a6');px(-6,7,5,4,'#f5f5f5');px(2,7,5,4,'#f5f5f5');
-   if(/잇카쿠몬|즈도몬/.test(f)){px(-13,-14,5,13,'#d9e3ec');px(8,-14,5,13,'#d9e3ec')}
+  part(-8,-4,16,13,'#f1f0e9');part(-6,-12,12,9,'#f1f0e9');part(-12,-7,5,8,'#f5f4ef');part(8,-7,5,8,'#f5f4ef');
+  part(-4,-17,8,5,'#df754c');part(-5,7,5,5,'#f5f4ef');part(2,7,5,5,'#f5f4ef');
+  part(-6,-2,3,3,'#6c7c9a');part(4,-2,3,3,'#6c7c9a');eye(-4,-9,'#d0a52c');px(-2,1,5,2,'#c96f75');
+  part(-12,-2,3,3,'#6c7c9a');part(10,-2,3,3,'#6c7c9a');
+  if(/원뿔몬|쥬드몬|바이킹몬/.test(f)){part(-13,-15,5,13,'#d8e0e8');part(9,-15,5,13,'#d8e0e8');part(-2,-19,5,4,'#a8d6e8')}
  }else if(family==='gatomon'){
-   px(-7,-4,14,13,color);px(-6,-11,12,8,color);px(-8,-17,5,10,'#e9d7ad');px(3,-17,5,10,'#e9d7ad');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-2,-1,5,3,'#e8b6a2');px(-5,8,4,4,'#e8d8c2');px(2,8,4,4,'#e8d8c2');px(8,4,5,3,'#e9d7ad');
-   if(/엔젤우몬|오파니몬/.test(f)){px(-13,-5,5,12,'#fff0bd');px(8,-5,5,12,'#fff0bd')}
+  part(-7,-4,14,13,color);part(-6,-12,12,8,color);part(-9,-20,5,11,'#e9d9b5');part(4,-20,5,11,'#e9d9b5');
+  part(-5,7,4,5,'#eee5d2');part(2,7,4,5,'#eee5d2');part(8,3,7,3,'#e9d9b5');part(13,2,3,4,'#8a79b2');
+  eye(-4,-9,'#4b9bd0');px(-2,0,5,2,'#b97876');part(-10,2,4,5,'#f4e7ca');part(7,2,4,5,'#f4e7ca');
+  if(/엔젤우몬|홀리드라몬|오파니몬/.test(f)){part(-14,-5,5,13,'#fff1c5');part(9,-5,5,13,'#fff1c5');part(-3,-22,6,5,'#f1d278')}
  }else if(family==='veemon'){
-   px(-8,-4,16,12,color);px(-6,-11,12,8,color);px(-9,-15,5,7,'#4c9fe2');px(4,-15,5,7,'#4c9fe2');px(-4,-15,8,4,'#ffe16f');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,4,'#f5d8b1');px(-6,8,4,4,'#3e79b5');px(2,8,4,4,'#3e79b5');
-   if(/엑스브이몬|파일드라몬|황제드라몬/.test(f)){px(-12,-3,5,10,'#c7d9ec');px(8,-3,5,10,'#c7d9ec')}
+  part(-8,-4,16,13,color);part(-6,-12,12,9,color);part(-10,-16,5,8,'#3e88c7');part(6,-16,5,8,'#3e88c7');
+  part(-4,-16,8,4,'#ffe16f');part(-5,7,5,5,'#3476ad');part(2,7,5,5,'#3476ad');
+  part(-4,0,8,5,'#e9d7b6');eye(-4,-9,'#276c9c');px(-1,-14,3,2,'#fff0a0');
+  if(/엑스브이몬|파일드라몬|임페리얼드라몬/.test(f)){part(-12,-3,5,10,'#d4e0eb');part(8,-3,5,10,'#d4e0eb');part(-3,-19,6,4,'#e4e9f0')}
  }else if(family==='guilmon'){
-   px(-8,-4,16,12,color);px(-6,-11,12,8,color);px(-10,-13,5,8,'#b43e42');px(6,-13,5,8,'#b43e42');px(-4,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,7,5,'#f4d6b0');px(-5,8,4,4,'#873b43');px(2,8,4,4,'#873b43');px(-10,0,4,3,'#f2e8d8');px(7,0,4,3,'#f2e8d8');
-   if(/그라우몬|메가로그라우몬|듀크몬/.test(f)){px(-12,-5,5,11,'#a9b6c8');px(8,-5,5,11,'#a9b6c8')}
+  part(-8,-4,16,13,color);part(-6,-12,12,9,color);part(-11,-14,5,8,'#bd3e43');part(6,-14,5,8,'#bd3e43');
+  part(-5,7,5,5,'#913c45');part(2,7,5,5,'#913c45');part(-4,-1,8,5,'#f0d4ad');
+  part(-11,0,4,3,'#eee5d4');part(8,0,4,3,'#eee5d4');eye(-4,-9,'#398f65');px(-2,-16,4,2,'#f3e6d2');
+  part(8,5,7,3,'#b73c44');
+  if(/그라우몬|메가로그라우몬|듀크몬/.test(f)){part(-12,-5,5,12,'#aebdce');part(8,-5,5,12,'#aebdce');part(-3,-18,6,5,'#dce4ed')}
  }else if(family==='renamon'){
-   px(-7,-4,14,13,color);px(-5,-11,10,8,color);px(-9,-19,5,12,'#d8b04f');px(4,-19,5,12,'#d8b04f');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,3,'#f2dfb1');px(-5,8,4,4,'#9c8248');px(2,8,4,4,'#9c8248');px(-10,1,20,3,'#f0d98c');
-   if(/구미호몬|샤크라몬/.test(f)){px(-13,-4,5,12,'#f2d98a');px(8,-4,5,12,'#f2d98a')}
- }else if(family==='terriermon'){
-   px(-7,-4,14,13,color);px(-5,-10,10,8,color);px(-12,-18,5,16,'#b7d8a7');px(7,-18,5,16,'#b7d8a7');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,3,'#f1d8b9');px(-5,8,4,4,'#8caf7d');px(2,8,4,4,'#8caf7d');
-   if(/가르고몬|래피드몬/.test(f)){px(-12,0,5,8,'#d7e1d0');px(8,0,5,8,'#d7e1d0')}
+  part(-7,-4,14,13,color);part(-5,-12,10,8,color);part(-10,-22,5,14,'#d8b04f');part(5,-22,5,14,'#d8b04f');
+  part(-5,7,4,5,'#9c8248');part(2,7,4,5,'#9c8248');part(-10,1,20,3,'#f0d98c');
+  part(-3,-1,6,4,'#f2dfb1');eye(-4,-9,'#5a9ab6');part(-12,-2,4,8,'#e4c16a');part(9,-2,4,8,'#e4c16a');
+  if(/구미호몬|도사몬|샤크라몬/.test(f)){part(-14,-7,5,12,'#f5e2a3');part(9,-7,5,12,'#f5e2a3');part(-3,-23,6,4,'#f5d77b')}
+ }else if(family==='terrier'){
+  part(-7,-4,14,13,color);part(-5,-11,10,8,color);part(-12,-22,5,18,'#b7d8a7');part(7,-22,5,18,'#b7d8a7');
+  part(-5,7,4,5,'#8caf7d');part(2,7,4,5,'#8caf7d');part(-3,-1,6,4,'#f1d8b9');eye(-4,-9,'#4c8e65');
+  part(-12,-3,5,8,'#b7d8a7');part(8,-3,5,8,'#b7d8a7');
+  if(/가르고몬|래피드몬|세인트가르고몬/.test(f)){part(-14,0,6,8,'#d5e1d0');part(9,0,6,8,'#d5e1d0');part(-3,-17,6,4,'#e9dfc2')}
  }else if(family==='impmon'){
-   px(-7,-4,14,13,color);px(-5,-10,10,8,color);px(-10,-14,5,8,'#554b82');px(6,-14,5,8,'#554b82');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,3,'#d9b2a5');px(-5,8,4,4,'#514a72');px(2,8,4,4,'#514a72');px(-8,-17,16,4,'#493d70');
-   if(/베리얼묘티스몬|벨제브몬/.test(f)){px(-12,-4,5,11,'#29283d');px(8,-4,5,11,'#29283d')}
+  part(-7,-4,14,13,color);part(-5,-11,10,8,color);part(-10,-17,5,9,'#554b82');part(6,-17,5,9,'#554b82');
+  part(-5,7,4,5,'#514a72');part(2,7,4,5,'#514a72');part(-8,-19,16,4,'#493d70');
+  part(-3,-1,6,4,'#d9b2a5');eye(-4,-9,'#f2c45f');part(8,2,5,3,'#514a72');
+  if(/위자몬|바알몬|베르제브몬/.test(f)){part(-12,-5,5,12,'#353047');part(8,-5,5,12,'#353047');part(-3,-21,6,4,'#a78bd3')}
  }else if(family==='hawkmon'){
-   px(-7,-4,14,13,color);px(-5,-11,10,8,color);px(-10,-16,5,9,'#a66e4f');px(6,-16,5,9,'#a66e4f');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-2,-1,5,4,'#f2c36a');px(-5,8,4,4,'#8c5c45');px(2,8,4,4,'#8c5c45');px(-13,-2,6,8,'#d9a77c');px(8,-2,6,8,'#d9a77c');
- }else if(family==='wormmon'){
-   px(-8,-4,16,12,color);px(-6,-10,12,8,color);px(-9,-15,5,8,'#4f9d78');px(5,-15,5,8,'#4f9d78');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,3,'#e6c6a2');px(-6,8,5,4,'#4f9d78');px(2,8,5,4,'#4f9d78');
-   if(/스팅몬|반쵸스팅몬/.test(f)){px(-11,-14,5,8,'#d6e7a0');px(7,-14,5,8,'#d6e7a0')}
+  part(-7,-4,14,13,color);part(-5,-12,10,8,color);part(-10,-18,5,9,'#a66e4f');part(6,-18,5,9,'#a66e4f');
+  part(-5,7,4,5,'#8c5c45');part(2,7,4,5,'#8c5c45');part(-2,-1,5,4,'#f2c36a');
+  part(-14,-3,7,10,'#d9a77c');part(8,-3,7,10,'#d9a77c');eye(-4,-9,'#4e9ab1');
+  if(/아큐라몬|실피드몬|발키리몬/.test(f)){part(-17,-6,7,13,'#eee0c4');part(10,-6,7,13,'#eee0c4');part(-3,-20,6,5,'#f5d77b')}
  }else{
-   px(-7,-5,14,11,color);px(-5,-9,10,6,color);px(-12,-5,6,7,'#f2c78a');px(6,-5,6,7,'#f2c78a');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-2,6,4,'#f5dfbd');px(-5,6,4,4,'#39465c');px(2,6,4,4,'#39465c');
-   if(/엔젤|홀리|세라피/.test(f)){px(-10,-14,5,8,'#fff0a8');px(6,-14,5,8,'#fff0a8');px(-13,0,4,9,'#f5e9ce');px(9,0,4,9,'#f5e9ce')}
+  // Wormmon: segmented caterpillar body, paired feelers and tiny feet.
+  part(-8,-4,16,12,color);part(-6,-11,12,8,color);part(-9,-16,4,7,'#4f9d78');part(5,-16,4,7,'#4f9d78');
+  part(-7,5,5,5,'#4f9d78');part(2,5,5,5,'#4f9d78');part(-3,-1,6,4,'#e6c6a2');
+  for(let i=-1;i<=1;i++)px(i*5-1,0,2,8,'#4f9d78');
+  eye(-4,-9,'#a64e56');part(-12,0,4,4,'#6ab78a');part(9,0,4,4,'#6ab78a');
+  if(/스팅몬|파일드라몬|그랑쿠가몬/.test(f)){part(-12,-15,5,8,'#d6e7a0');part(8,-15,5,8,'#d6e7a0');part(-3,-19,6,4,'#d8e8b3')}
  }
- // Add layered pixel highlights, face details and family-specific silhouette accents.
- const dark='#263044',light='#fff4d6';
- px(-6,-4,2,2,light);px(4,-4,2,2,light);
- px(-5,-3,2,3,dark);px(3,-3,2,3,dark);
- px(-4,-3,1,1,'#ffffff');px(4,-3,1,1,'#ffffff');
- px(-4,1,8,2,'#ffffff55');
- px(-7,4,3,3,dark);px(4,4,3,3,dark);
- px(-6,6,4,2,color);px(3,6,4,2,color);
- if(['agumon','guilmon','veemon'].includes(family)){px(-2,-15,4,5,'#f4d16b');px(-1,-13,2,3,'#fff0a6');px(7,1,7,3,dark);px(12,0,3,2,color)}
- if(['gabumon','gomamon'].includes(family)){px(-11,-13,4,8,'#e9edf4');px(8,-13,4,8,'#e9edf4');px(-2,3,4,2,'#d7e8f4')}
- if(['patamon','biyomon','hawkmon'].includes(family)){px(-14,-8,4,12,'#fff0c2');px(11,-8,4,12,'#fff0c2');px(-2,-16,4,3,'#f6d16d')}
- if(['tentomon','wormmon'].includes(family)){px(-10,-2,3,8,dark);px(8,-2,3,8,dark);px(-3,3,6,3,'#e5f0a4')}
- if(['palmon','renamon','terriermon'].includes(family)){px(-11,-16,4,7,'#f5d77b');px(8,-16,4,7,'#f5d77b');px(-3,2,6,3,'#f2dfb1')}
- if(family==='gatomon'){px(-8,-20,4,5,'#f3e7c9');px(5,-20,4,5,'#f3e7c9');px(8,3,7,3,'#e9d7ad')}
- if(family==='impmon'){px(-9,-18,5,4,'#8c7ac4');px(5,-18,5,4,'#8c7ac4');px(-2,3,4,3,'#b58ed8')}
- // Small armor/belly panel and ground shadow make the sprite read more clearly at phone scale.
- px(-4,1,8,4,'#ffffff22');px(-3,2,6,2,'#172235');
- // tiny aura indicates advanced evolution
- if(player&&player.evo>=3){px(-12,-17,3,3,'#ffe28a');px(10,-17,3,3,'#ffe28a')}
+ // Shared face and armor polish: cheek pixels, belly plate, claws and evolution aura.
+ px(-5,2,2,2,'#ffffff55');px(4,2,2,2,'#ffffff55');
+ px(-4,9,2,2,white);px(3,9,2,2,white);
+ if(player&&player.evo>=2){part(-12,-20,3,3,'#ffe28a');part(10,-20,3,3,'#ffe28a')}
+ if(player&&player.evo>=3){px(-15,-13,2,2,'#9eeaff');px(14,-13,2,2,'#ffdf8b')}
  ctx.restore();
 }
 function drawMap(){
