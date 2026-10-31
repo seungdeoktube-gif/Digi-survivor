@@ -230,6 +230,8 @@ let stageIndex=0,maxStageUnlocked=0;
 try{maxStageUnlocked=Math.max(0,Math.min(stages.length-1,Number(localStorage.getItem('digiMaxStage')||0)))}catch(e){}
 function typeMultiplier(attacker,defender){if((attacker==='백신'&&defender==='바이러스')||(attacker==='바이러스'&&defender==='데이터')||(attacker==='데이터'&&defender==='백신'))return 1.5;if((attacker==='바이러스'&&defender==='백신')||(attacker==='데이터'&&defender==='바이러스')||(attacker==='백신'&&defender==='데이터'))return .75;return 1;}
 let selected='agumon',player,enemies=[],shots=[],gems=[],particles=[],running=false,paused=false,last=0,elapsed=0,kills=0,level=1,xp=0,xpNeed=5,coins=0,runCoins=0,spawn=0,fire=0,special=0,move={x:0,y:0},upgrades={power:0,speed:0,magnet:0,armor:0,orbit:0},perm={hp:0,power:0,speed:0},bossClock=55,boss=null,animTime=0,discovered=new Set(['아구몬','파피몬','파닥몬']);
+try{coins=Math.max(0,Number(localStorage.getItem('digiCoins')||0))}catch(e){}
+function saveCoins(){try{localStorage.setItem('digiCoins',String(coins))}catch(e){}}
 try{JSON.parse(localStorage.getItem('digiCodex')||'[]').forEach(n=>discovered.add(n))}catch(e){}
 try{perm=JSON.parse(localStorage.getItem('digiPerm')||'{"hp":0,"power":0,"speed":0}')}catch(e){}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),rand=(a,b)=>a+Math.random()*(b-a);
@@ -308,7 +310,7 @@ function showEvolution(options){
  options.forEach(form=>{
   const locked=form.jogress&&(kills<40||runCoins<10);
   const b=document.createElement('button');
-  b.innerHTML='<b>'+form.emoji+' '+form.name+'</b><small>'+form.stage+' · '+form.type+' · '+form.desc+(locked?'<br>🔒 조건: 처치 60 / 디지코어 20 (현재 '+kills+' / '+runCoins+')':'')+'</small>';
+  b.innerHTML='<b>'+form.emoji+' '+form.name+'</b><small>'+form.stage+' · '+form.type+' · '+form.desc+(locked?'<br>🔒 조건: 처치 40 / 디지코어 10 (현재 '+kills+' / '+runCoins+')':'')+'</small>';
   b.disabled=!!locked;b.style.opacity=locked?'.45':'1';
   b.onclick=()=>applyEvolution(form);
   box.appendChild(b);
@@ -339,7 +341,7 @@ if(fire>.62){fire=0;shoot()}
 enemies.forEach(e=>{let x=player.x-e.x,y=player.y-e.y,d=Math.hypot(x,y)||1;e.x+=x/d*e.speed*dt;e.y+=y/d*e.speed*dt;if(Math.hypot(x,y)<e.r+player.r&&player.inv<=0){let dmg=(e.big?18:8)*typeMultiplier(e.type,player.type);player.hp-=Math.max(1,dmg-upgrades.armor*2);player.inv=.65;if(player.hp<=0)endRun()}if(upgrades.orbit&&Math.hypot(x,y)<48){e.hp-=18*upgrades.orbit*dt*typeMultiplier(player.type,e.type)}});
 shots.forEach(s=>{s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;if(boss&&!s.dead&&Math.hypot(s.x-boss.x,s.y-boss.y)<boss.r+s.r){boss.hp-=s.damage*typeMultiplier(player.type,boss.type);s.dead=true;if(boss.hp<=0){runCoins+=25;gems.push({x:boss.x,y:boss.y,v:5});completeStage();}}for(let e of enemies){if(!s.dead&&Math.hypot(s.x-e.x,s.y-e.y)<e.r+s.r){e.hp-=s.damage;if(s.kind==='gabumon')e.speed*=.82;s.dead=true;for(let i=0;i<3;i++)particles.push({x:e.x,y:e.y,vx:rand(-35,35),vy:rand(-35,35),life:.25});break}}});
 shots=shots.filter(s=>s.life>0&&!s.dead);
-enemies=enemies.filter(e=>{if(e.hp<=0){kills++;gems.push({x:e.x,y:e.y,v:1});if(e.big){gems.push({x:e.x+8,y:e.y,v:2});runCoins+=5}discovered.add(e.name||'미확인 적');localStorage.setItem('digiCodex',JSON.stringify([...discovered]));return false}return true});
+enemies=enemies.filter(e=>{if(e.hp<=0){kills++;career.kills++;saveCareer();if([50,100,300,500].includes(career.kills))checkAchievements();gems.push({x:e.x,y:e.y,v:1});if(e.big){gems.push({x:e.x+8,y:e.y,v:2});runCoins+=5}discovered.add(e.name||'미확인 적');localStorage.setItem('digiCodex',JSON.stringify([...discovered]));return false}return true});
 gems.forEach(g=>{if(!running)return;let dx=player.x-g.x,dy=player.y-g.y,d=Math.hypot(dx,dy);if(d<85+upgrades.magnet*45){g.x+=dx/(d||1)*220*dt;g.y+=dy/(d||1)*220*dt}if(d<player.r+8){g.got=true;xp+=g.v;if(xp>=xpNeed){xp-=xpNeed;level++;career.maxLevel=Math.max(career.maxLevel,level);checkAchievements();xpNeed=Math.floor(xpNeed*1.35+2);if(!checkEvolution())levelUp()}}});gems=gems.filter(g=>!g.got);
 particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);
 }
@@ -419,9 +421,9 @@ ctx.fillStyle='#fff';ctx.font='bold 11px system-ui';ctx.fillText('STAGE '+(stage
 function hud(){let c=chars[selected];$('charName').textContent=player.form+' Lv.'+level+' · '+stages[stageIndex].name;$('evoName').textContent=player.type+' 속성 · 진화 '+player.evo+'회';let nearest=enemies.reduce((a,b)=>!a||Math.hypot(b.x-player.x,b.y-player.y)<Math.hypot(a.x-player.x,a.y-player.y)?b:a,null);let mult=nearest?typeMultiplier(player.type,nearest.type):1;$('typeHint').textContent=nearest?(mult>1?'상성 유리 ×'+mult.toFixed(2):mult<1?'상성 불리 ×'+mult.toFixed(2):'상성 보통'):'백신 > 바이러스 > 데이터 > 백신';$('stats').textContent='처치 '+kills+' · '+fmt(elapsed);$('hpFill').style.width=clamp(player.hp/player.maxHp*100,0,100)+'%';$('hpText').textContent=Math.max(0,Math.ceil(player.hp))+' / '+player.maxHp;$('xpFill').style.width=xp/xpNeed*100+'%';$('xpText').textContent=xp+' / '+xpNeed;$('coinText').textContent='디지코어 '+(coins+runCoins);$('special').innerHTML='필살기<br>충전 '+Math.floor(special)+'%'}
 function fmt(t){return String(Math.floor(t/60)).padStart(2,'0')+':'+String(Math.floor(t%60)).padStart(2,'0')}
 function loop(now){if(!running)return;let dt=Math.min(.04,(now-last)/1000||0);last=now;if(!paused)update(dt);draw();hud();if(running)requestAnimationFrame(loop)}
-function endRun(){running=false;coins+=runCoins+Math.floor(elapsed/20);localStorage.setItem('digiPerm',JSON.stringify(perm));$('resultText').textContent='생존 시간 '+fmt(elapsed)+' · 처치 '+kills+' · 획득 디지코어 '+(runCoins+Math.floor(elapsed/20));$('gameover').classList.remove('hidden')}
+function endRun(){running=false;coins+=runCoins+Math.floor(elapsed/20);saveCoins();saveCareer();localStorage.setItem('digiPerm',JSON.stringify(perm));$('resultText').textContent='생존 시간 '+fmt(elapsed)+' · 처치 '+kills+' · 획득 디지코어 '+(runCoins+Math.floor(elapsed/20));$('gameover').classList.remove('hidden')}
 function completeStage(){
- running=false;boss=null;runCoins+=30;coins+=runCoins;runCoins=0;
+ running=false;boss=null;runCoins+=30;coins+=runCoins;runCoins=0;saveCoins();career.bosses++;career.stages++;checkAchievements();
  if(stageIndex<stages.length-1){maxStageUnlocked=Math.max(maxStageUnlocked,stageIndex+1);localStorage.setItem('digiMaxStage',String(maxStageUnlocked));$('clearTitle').textContent='STAGE CLEAR!';$('clearText').textContent=stages[stageIndex].name+'의 보스 '+stages[stageIndex].boss+' 격파! 보상 디지코어를 획득했어. 다음 지역이 해금됐어.';$('nextStageBtn').textContent='다음 스테이지: '+stages[stageIndex+1].name;$('nextStageBtn').style.display='block';}
  else{$('clearTitle').textContent='DIGITAL WORLD SAVED!';$('clearText').textContent='아포카리몬을 격파했어. 디지몬 어드벤처 메인 스토리 코스를 모두 클리어했어!';$('nextStageBtn').textContent='최종 스테이지 다시 도전';$('nextStageBtn').style.display='block';}
  $('stageclear').classList.remove('hidden');renderStageList();
@@ -436,7 +438,7 @@ $('stageSelectBtn').onclick=()=>{$('stageclear').classList.add('hidden');$('star
 $('special').onclick=()=>{if(!running||special<100)return;special=0;const radius=selected==='patamon'?190:selected==='gabumon'?125:155;const dmg=selected==='agumon'?125:selected==='gabumon'?95:80;enemies.forEach(e=>{if(Math.hypot(e.x-player.x,e.y-player.y)<radius)e.hp-=dmg*typeMultiplier(player.type,e.type)});if(boss&&Math.hypot(boss.x-player.x,boss.y-player.y)<radius+boss.r)boss.hp-=dmg*typeMultiplier(player.type,boss.type)*1.8;for(let i=0;i<18;i++){let a=i/18*Math.PI*2;particles.push({x:player.x+Math.cos(a)*35,y:player.y+Math.sin(a)*35,vx:Math.cos(a)*90,vy:Math.sin(a)*90,life:.5})}};
 function openLab(){$('gameover').classList.add('hidden');$('lab').classList.remove('hidden');$('labCoins').textContent='보유 디지코어: '+coins}
 $('labBtn').onclick=openLab;$('labClose').onclick=()=>{$('lab').classList.add('hidden');$('start').classList.remove('hidden')};
-function buy(stat,cost){if(coins<cost){$('labCoins').textContent='디지코어가 부족해. 보유량: '+coins;return}coins-=cost;perm[stat]++;localStorage.setItem('digiPerm',JSON.stringify(perm));$('labCoins').textContent='보유 디지코어: '+coins}
+function buy(stat,cost){if(coins<cost){$('labCoins').textContent='디지코어가 부족해. 보유량: '+coins;return}coins-=cost;saveCoins();perm[stat]++;localStorage.setItem('digiPerm',JSON.stringify(perm));$('labCoins').textContent='보유 디지코어: '+coins}
 $('buyHp').onclick=()=>buy('hp',10);$('buyPower').onclick=()=>buy('power',12);$('buySpeed').onclick=()=>buy('speed',10);
 function openCodex(){const list=$('codexList');list.innerHTML='';const all=[...discovered].sort();if(!all.length)list.innerHTML='<p>아직 발견한 디지몬이 없어.</p>';all.forEach(n=>{const row=document.createElement('button');row.textContent='◆ '+n+' · 도감 등록';list.appendChild(row)});$('start').classList.add('hidden');$('codex').classList.remove('hidden')}
 $('codexBtn').onclick=openCodex;$('codexClose').onclick=()=>{$('codex').classList.add('hidden');$('start').classList.remove('hidden')};
