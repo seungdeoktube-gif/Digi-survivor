@@ -183,7 +183,7 @@ function makePixelSprite(type,id,evo=false){
  const m=new THREE.MeshBasicMaterial({map:t,transparent:true,alphaTest:.08,side:THREE.DoubleSide});
  const o=new THREE.Mesh(new THREE.PlaneGeometry(2.35,2.55),m);o.position.y=1.25;o.userData.ownedTexture=t;return o;
 }
-function makePartner(id){const g=new THREE.Group();g.add(makePixelSprite('partner',id,!!evolved));g.userData.species=id;return g;}
+function makePartner(id,isEvolved=false){const g=new THREE.Group();g.add(makePixelSprite('partner',id,isEvolved));g.userData.species=id;return g;}
 const player=makePartner(selected);scene.add(player);player.position.y=0;
 const enemyLooks={grunt:{skin:mat(0x8752a6),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xff6e8a,.3,.15)},runner:{skin:mat(0x73b84f),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xff6e8a,.3,.15)},brute:{skin:mat(0x8b3c32),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xff6e8a,.3,.15)},boss:{skin:mat(0x44334f),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xffdf66,.3,.15)}};
 const hitMaterial=mat(0xffb1a5),orbMaterial=mat(0x52e4d4,.3,.25),bossShotMaterial=mat(0xff416b,.3,.2);
@@ -223,7 +223,7 @@ const upgrades=[
 {name:'회복 프로토콜',desc:'HP 40 회복',apply:()=>hp=Math.min(maxHp,hp+40)}
 ];let damage=roster.agumon.damage,speed=6.4,magnet=2.6,fireRate=.66;
 function levelUp(){paused=true;$('levelUp').classList.remove('hidden');const list=$('choiceList');list.innerHTML='';const picks=[...upgrades].sort(()=>Math.random()-.5).slice(0,3);for(const u of picks){const b=document.createElement('button');b.className='choice';b.innerHTML='<b>'+u.name+'</b><small>'+u.desc+'</small>';b.onclick=()=>{u.apply();$('levelUp').classList.add('hidden');paused=false;toast(u.name+' 강화 완료')};list.appendChild(b)}}
-function makeEvolution(id){return makePartner(id);}
+function makeEvolution(id){return makePartner(id,true);}
 function evolve(){
  if(evolved)return;
  evolved=true;
