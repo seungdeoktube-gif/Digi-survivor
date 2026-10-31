@@ -308,9 +308,9 @@ function getEvolutionOptions(){
 function showEvolution(options){
  running=false;const box=$('evoChoices');box.innerHTML='';
  options.forEach(form=>{
-  const locked=form.jogress&&(kills<40||runCoins<10);
+  const locked=form.jogress&&(kills<40||coins+runCoins<10);
   const b=document.createElement('button');
-  b.innerHTML='<b>'+form.emoji+' '+form.name+'</b><small>'+form.stage+' · '+form.type+' · '+form.desc+(locked?'<br>🔒 조건: 처치 40 / 디지코어 10 (현재 '+kills+' / '+runCoins+')':'')+'</small>';
+  b.innerHTML='<b>'+form.emoji+' '+form.name+'</b><small>'+form.stage+' · '+form.type+' · '+form.desc+(locked?'<br>🔒 조건: 처치 40 / 디지코어 10 (현재 '+kills+' / '+(coins+runCoins)+')':'')+'</small>';
   b.disabled=!!locked;b.style.opacity=locked?'.45':'1';
   b.onclick=()=>applyEvolution(form);
   box.appendChild(b);
@@ -323,7 +323,7 @@ function applyEvolution(form){
  const base=chars[selected];player.power=Math.round((base.power+perm.power)*form.mult);
  player.maxHp=Math.round((base.hp+perm.hp*10)*(1+(form.mult-1)*.35));
  player.hp=player.maxHp;player.r=Math.min(18,12+player.evo);
- if(form.jogress)runCoins-=10;
+ if(form.jogress){let pay=Math.min(runCoins,10);runCoins-=pay;coins-=10-pay;saveCoins();}
  $('evolution').classList.add('hidden');
  levelUp();
 }
@@ -341,7 +341,7 @@ if(fire>.62){fire=0;shoot()}
 enemies.forEach(e=>{let x=player.x-e.x,y=player.y-e.y,d=Math.hypot(x,y)||1;e.x+=x/d*e.speed*dt;e.y+=y/d*e.speed*dt;if(Math.hypot(x,y)<e.r+player.r&&player.inv<=0){let dmg=(e.big?18:8)*typeMultiplier(e.type,player.type);player.hp-=Math.max(1,dmg-upgrades.armor*2);player.inv=.65;if(player.hp<=0)endRun()}if(upgrades.orbit&&Math.hypot(x,y)<48){e.hp-=18*upgrades.orbit*dt*typeMultiplier(player.type,e.type)}});
 shots.forEach(s=>{s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;if(boss&&!s.dead&&Math.hypot(s.x-boss.x,s.y-boss.y)<boss.r+s.r){boss.hp-=s.damage*typeMultiplier(player.type,boss.type);s.dead=true;if(boss.hp<=0){runCoins+=25;gems.push({x:boss.x,y:boss.y,v:5});completeStage();}}for(let e of enemies){if(!s.dead&&Math.hypot(s.x-e.x,s.y-e.y)<e.r+s.r){e.hp-=s.damage;if(s.kind==='gabumon')e.speed*=.82;s.dead=true;for(let i=0;i<3;i++)particles.push({x:e.x,y:e.y,vx:rand(-35,35),vy:rand(-35,35),life:.25});break}}});
 shots=shots.filter(s=>s.life>0&&!s.dead);
-enemies=enemies.filter(e=>{if(e.hp<=0){kills++;career.kills++;saveCareer();if([50,100,300,500].includes(career.kills))checkAchievements();gems.push({x:e.x,y:e.y,v:1});if(e.big){gems.push({x:e.x+8,y:e.y,v:2});runCoins+=5}discovered.add(e.name||'미확인 적');localStorage.setItem('digiCodex',JSON.stringify([...discovered]));return false}return true});
+enemies=enemies.filter(e=>{if(e.hp<=0){kills++;career.kills++;if(career.kills%10===0)saveCareer();if([50,100,300,500].includes(career.kills))checkAchievements();gems.push({x:e.x,y:e.y,v:1});if(e.big){gems.push({x:e.x+8,y:e.y,v:2});runCoins+=5}discovered.add(e.name||'미확인 적');localStorage.setItem('digiCodex',JSON.stringify([...discovered]));return false}return true});
 gems.forEach(g=>{if(!running)return;let dx=player.x-g.x,dy=player.y-g.y,d=Math.hypot(dx,dy);if(d<85+upgrades.magnet*45){g.x+=dx/(d||1)*220*dt;g.y+=dy/(d||1)*220*dt}if(d<player.r+8){g.got=true;xp+=g.v;if(xp>=xpNeed){xp-=xpNeed;level++;career.maxLevel=Math.max(career.maxLevel,level);checkAchievements();xpNeed=Math.floor(xpNeed*1.35+2);if(!checkEvolution())levelUp()}}});gems=gems.filter(g=>!g.got);
 particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);
 }
