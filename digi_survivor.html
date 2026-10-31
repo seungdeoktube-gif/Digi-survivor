@@ -329,12 +329,12 @@ function applyEvolution(form){
 }
 function checkEvolution(){const options=getEvolutionOptions();if(options.length){showEvolution(options);return true}return false}
 function levelUp(){running=false;const box=$('upgradeChoices');box.innerHTML='';let picks=[...upgradePool].sort(()=>Math.random()-.5).slice(0,3);picks.forEach(([k,n,d])=>{let b=document.createElement('button');b.innerHTML='<b>'+n+'</b><br><small>'+d+'</small>';b.onclick=()=>chooseUpgrade(k);box.appendChild(b)});$('levelup').classList.remove('hidden')}
-function spawnEnemy(){let side=Math.floor(Math.random()*4),x=side===0?-20:side===1?W+20:rand(0,W),y=side===2?-20:side===3?H+20:rand(0,H);let big=elapsed>35&&Math.random()<.10;let hp=(big?95:24)+elapsed*.28+stageIndex*8;let mob=stages[stageIndex].mobs[Math.floor(Math.random()*stages[stageIndex].mobs.length)];let type=mob[1];enemies.push({x,y,r:big?16:10,hp,max:hp,speed:big?32:rand(39,56)+elapsed*.13+stageIndex*1.8,big,hit:0,type,name:mob[0]})}
+function spawnEnemy(){let side=Math.floor(Math.random()*4),x=side===0?-20:side===1?W+20:rand(0,W),y=side===2?-20:side===3?H+20:rand(0,H);let big=elapsed>35&&Math.random()<.10;let hp=(big?95:24)+elapsed*.28+stageIndex*8;let mob=stages[stageIndex].mobs[Math.floor(Math.random()*stages[stageIndex].mobs.length)];let type=mob[1];enemies.push({x,y,r:big?16:10,hp,max:hp,speed:big?30:rand(38,52)+Math.min(elapsed,120)*.085+stageIndex*1.4,big,hit:0,type,name:mob[0]})}
 function spawnBoss(){if(boss)return;const st=stages[stageIndex];const name=st.boss;boss={x:W/2,y:-30,r:stageIndex===7?31:stageIndex>=3?27:24,hp:st.bossHp+elapsed*1.5,max:st.bossHp+elapsed*1.5,speed:stageIndex>=3?39:34,name,type:st.bossType,attack:0};$('modeLabel').textContent='BOSS: '+name;}
 function shoot(){if(!enemies.length&&!boss)return;let target=enemies.reduce((a,b)=>!a||Math.hypot(b.x-player.x,b.y-player.y)<Math.hypot(a.x-player.x,a.y-player.y)?b:a,null);if(boss&&(!target||Math.hypot(boss.x-player.x,boss.y-player.y)<Math.hypot(target.x-player.x,target.y-player.y)))target=boss;if(!target)return;let dx=target.x-player.x,dy=target.y-player.y,d=Math.hypot(dx,dy)||1;shots.push({x:player.x,y:player.y,vx:dx/d*(selected==='patamon'?360:300),vy:dy/d*(selected==='patamon'?360:300),life:1.2,damage:player.power*(1+upgrades.power*.35)*typeMultiplier(player.type,target.type),r:selected==='agumon'?5:4,kind:selected})}
 function update(dt){elapsed+=dt;animTime+=dt;spawn+=dt;fire+=dt;bossClock-=dt;player.inv=Math.max(0,player.inv-dt);special=Math.min(100,special+dt*3.2);
 let dx=move.x,dy=move.y,mag=Math.hypot(dx,dy);if(mag>1){dx/=mag;dy/=mag}player.x=clamp(player.x+dx*player.speed*(1+upgrades.speed*.15)*dt,14,W-14);player.y=clamp(player.y+dy*player.speed*(1+upgrades.speed*.15)*dt,14,H-14);
-if(spawn>Math.max(.28,1.1-elapsed*.009)){spawn=0;spawnEnemy();if(elapsed>40&&Math.random()<.4)spawnEnemy()}
+if(spawn>Math.max(.42,1.1-Math.min(elapsed,100)*.0068)){spawn=0;spawnEnemy();if(elapsed>45&&Math.random()<.28)spawnEnemy()}
 if(bossClock<=0&&!boss){spawnBoss();bossClock=999999}
 if(boss){let bx=player.x-boss.x,by=player.y-boss.y,bd=Math.hypot(bx,by)||1;boss.x+=bx/bd*boss.speed*dt;boss.y+=by/bd*boss.speed*dt;if(bd<boss.r+player.r&&player.inv<=0){player.hp-=Math.max(1,22*typeMultiplier(boss.type,player.type)-upgrades.armor*2);player.inv=.8;if(player.hp<=0)endRun()}}
 if(fire>.62){fire=0;shoot()}
@@ -360,6 +360,44 @@ function pixelDino(x,y,color,scale=2){
  }else if(family==='gabumon'||/가루몬|즈드/.test(f)){
    px(-8,-5,16,11,color);px(-6,-10,12,6,color);px(-9,-14,5,7,'#d8dce5');px(4,-14,5,7,'#d8dce5');px(-7,-9,14,5,'#f4f0df');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-4,-2,8,5,'#d7c99c');px(-6,6,4,4,'#34435a');px(3,6,4,4,'#34435a');
    if(/워가루몬|메탈가루몬/.test(f)){px(-11,-2,4,9,'#d9e0eb');px(8,-2,4,9,'#d9e0eb');px(-3,-13,6,3,'#9feaff')}
+ }else if(family==='patamon'){
+   px(-8,-5,16,12,color);px(-6,-11,12,8,color);px(-15,-9,8,14,'#e7b879');px(7,-9,8,14,'#e7b879');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-2,6,3,'#f3d8b5');px(-6,7,5,4,'#d9a46a');px(2,7,5,4,'#d9a46a');
+   if(/엔젤|홀리|세라피/.test(f)){px(-12,-15,5,8,'#fff2b8');px(8,-15,5,8,'#fff2b8');px(-15,0,5,9,'#fff0d5');px(10,0,5,9,'#fff0d5')}
+ }else if(family==='biyomon'){
+   px(-7,-5,14,12,color);px(-5,-11,10,7,color);px(-11,-10,5,9,'#f6b2a8');px(6,-10,5,9,'#f6b2a8');px(-3,-14,6,5,'#f7d36e');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-2,-2,5,4,'#f5c65e');px(-5,7,4,4,'#d75e57');px(2,7,4,4,'#d75e57');
+   if(/버드라몬|가루다몬/.test(f)){px(-14,-5,6,11,'#e85e54');px(8,-5,6,11,'#e85e54')}
+ }else if(family==='tentomon'){
+   px(-8,-4,16,12,color);px(-6,-11,12,8,color);px(-13,-12,6,12,'#e6bd68');px(7,-12,6,12,'#e6bd68');px(-4,-14,3,5,'#343b4d');px(2,-14,3,5,'#343b4d');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-5,7,4,4,'#343b4d');px(2,7,4,4,'#343b4d');
+   if(/카부테리몬|아트라카부테리몬/.test(f)){px(-11,-16,22,5,'#d9e2ef');px(-2,-20,4,7,'#f2d36f')}
+ }else if(family==='palmon'){
+   px(-7,-4,14,13,color);px(-5,-9,10,8,color);px(-10,-15,7,8,'#6abf72');px(-3,-17,7,9,'#8edb7e');px(4,-14,7,8,'#55a95e');px(-5,-7,3,3,'#fff');px(3,-7,3,3,'#fff');px(-3,-1,6,3,'#f1d7b0');px(-5,8,4,4,'#e4c08c');px(2,8,4,4,'#e4c08c');
+   if(/릴리몬|로제몬/.test(f)){px(-11,-17,5,7,'#f5a6c7');px(7,-17,5,7,'#f5a6c7')}
+ }else if(family==='gomamon'){
+   px(-8,-4,16,12,color);px(-6,-10,12,8,color);px(-12,-7,5,7,'#f5f5f5');px(7,-7,5,7,'#f5f5f5');px(-5,-7,3,3,'#fff');px(3,-7,3,3,'#fff');px(-3,-1,6,4,'#e7a6a6');px(-6,7,5,4,'#f5f5f5');px(2,7,5,4,'#f5f5f5');
+   if(/잇카쿠몬|즈도몬/.test(f)){px(-13,-14,5,13,'#d9e3ec');px(8,-14,5,13,'#d9e3ec')}
+ }else if(family==='gatomon'){
+   px(-7,-4,14,13,color);px(-6,-11,12,8,color);px(-8,-17,5,10,'#e9d7ad');px(3,-17,5,10,'#e9d7ad');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-2,-1,5,3,'#e8b6a2');px(-5,8,4,4,'#e8d8c2');px(2,8,4,4,'#e8d8c2');px(8,4,5,3,'#e9d7ad');
+   if(/엔젤우몬|오파니몬/.test(f)){px(-13,-5,5,12,'#fff0bd');px(8,-5,5,12,'#fff0bd')}
+ }else if(family==='veemon'){
+   px(-8,-4,16,12,color);px(-6,-11,12,8,color);px(-9,-15,5,7,'#4c9fe2');px(4,-15,5,7,'#4c9fe2');px(-4,-15,8,4,'#ffe16f');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,4,'#f5d8b1');px(-6,8,4,4,'#3e79b5');px(2,8,4,4,'#3e79b5');
+   if(/엑스브이몬|파일드라몬|황제드라몬/.test(f)){px(-12,-3,5,10,'#c7d9ec');px(8,-3,5,10,'#c7d9ec')}
+ }else if(family==='guilmon'){
+   px(-8,-4,16,12,color);px(-6,-11,12,8,color);px(-10,-13,5,8,'#b43e42');px(6,-13,5,8,'#b43e42');px(-4,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,7,5,'#f4d6b0');px(-5,8,4,4,'#873b43');px(2,8,4,4,'#873b43');px(-10,0,4,3,'#f2e8d8');px(7,0,4,3,'#f2e8d8');
+   if(/그라우몬|메가로그라우몬|듀크몬/.test(f)){px(-12,-5,5,11,'#a9b6c8');px(8,-5,5,11,'#a9b6c8')}
+ }else if(family==='renamon'){
+   px(-7,-4,14,13,color);px(-5,-11,10,8,color);px(-9,-19,5,12,'#d8b04f');px(4,-19,5,12,'#d8b04f');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,3,'#f2dfb1');px(-5,8,4,4,'#9c8248');px(2,8,4,4,'#9c8248');px(-10,1,20,3,'#f0d98c');
+   if(/구미호몬|샤크라몬/.test(f)){px(-13,-4,5,12,'#f2d98a');px(8,-4,5,12,'#f2d98a')}
+ }else if(family==='terriermon'){
+   px(-7,-4,14,13,color);px(-5,-10,10,8,color);px(-12,-18,5,16,'#b7d8a7');px(7,-18,5,16,'#b7d8a7');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,3,'#f1d8b9');px(-5,8,4,4,'#8caf7d');px(2,8,4,4,'#8caf7d');
+   if(/가르고몬|래피드몬/.test(f)){px(-12,0,5,8,'#d7e1d0');px(8,0,5,8,'#d7e1d0')}
+ }else if(family==='impmon'){
+   px(-7,-4,14,13,color);px(-5,-10,10,8,color);px(-10,-14,5,8,'#554b82');px(6,-14,5,8,'#554b82');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,3,'#d9b2a5');px(-5,8,4,4,'#514a72');px(2,8,4,4,'#514a72');px(-8,-17,16,4,'#493d70');
+   if(/베리얼묘티스몬|벨제브몬/.test(f)){px(-12,-4,5,11,'#29283d');px(8,-4,5,11,'#29283d')}
+ }else if(family==='hawkmon'){
+   px(-7,-4,14,13,color);px(-5,-11,10,8,color);px(-10,-16,5,9,'#a66e4f');px(6,-16,5,9,'#a66e4f');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-2,-1,5,4,'#f2c36a');px(-5,8,4,4,'#8c5c45');px(2,8,4,4,'#8c5c45');px(-13,-2,6,8,'#d9a77c');px(8,-2,6,8,'#d9a77c');
+ }else if(family==='wormmon'){
+   px(-8,-4,16,12,color);px(-6,-10,12,8,color);px(-9,-15,5,8,'#4f9d78');px(5,-15,5,8,'#4f9d78');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-1,6,3,'#e6c6a2');px(-6,8,5,4,'#4f9d78');px(2,8,5,4,'#4f9d78');
+   if(/스팅몬|반쵸스팅몬/.test(f)){px(-11,-14,5,8,'#d6e7a0');px(7,-14,5,8,'#d6e7a0')}
  }else{
    px(-7,-5,14,11,color);px(-5,-9,10,6,color);px(-12,-5,6,7,'#f2c78a');px(6,-5,6,7,'#f2c78a');px(-5,-8,3,3,'#fff');px(3,-8,3,3,'#fff');px(-3,-2,6,4,'#f5dfbd');px(-5,6,4,4,'#39465c');px(2,6,4,4,'#39465c');
    if(/엔젤|홀리|세라피/.test(f)){px(-10,-14,5,8,'#fff0a8');px(6,-14,5,8,'#fff0a8');px(-13,0,4,9,'#f5e9ce');px(9,0,4,9,'#f5e9ce')}
@@ -423,7 +461,7 @@ function fmt(t){return String(Math.floor(t/60)).padStart(2,'0')+':'+String(Math.
 function loop(now){if(!running)return;let dt=Math.min(.04,(now-last)/1000||0);last=now;if(!paused)update(dt);draw();hud();if(running)requestAnimationFrame(loop)}
 function endRun(){running=false;coins+=runCoins+Math.floor(elapsed/20);saveCoins();saveCareer();localStorage.setItem('digiPerm',JSON.stringify(perm));$('resultText').textContent='생존 시간 '+fmt(elapsed)+' · 처치 '+kills+' · 획득 디지코어 '+(runCoins+Math.floor(elapsed/20));$('gameover').classList.remove('hidden')}
 function completeStage(){
- running=false;boss=null;runCoins+=30;coins+=runCoins;runCoins=0;saveCoins();career.bosses++;career.stages++;checkAchievements();
+ running=false;boss=null;runCoins+=30;coins+=runCoins;runCoins=0;saveCoins();career.bosses++;career.stages=Math.max(career.stages,stageIndex+1);checkAchievements();
  if(stageIndex<stages.length-1){maxStageUnlocked=Math.max(maxStageUnlocked,stageIndex+1);localStorage.setItem('digiMaxStage',String(maxStageUnlocked));$('clearTitle').textContent='STAGE CLEAR!';$('clearText').textContent=stages[stageIndex].name+'의 보스 '+stages[stageIndex].boss+' 격파! 보상 디지코어를 획득했어. 다음 지역이 해금됐어.';$('nextStageBtn').textContent='다음 스테이지: '+stages[stageIndex+1].name;$('nextStageBtn').style.display='block';}
  else{$('clearTitle').textContent='DIGITAL WORLD SAVED!';$('clearText').textContent='아포카리몬을 격파했어. 디지몬 어드벤처 메인 스토리 코스를 모두 클리어했어!';$('nextStageBtn').textContent='최종 스테이지 다시 도전';$('nextStageBtn').style.display='block';}
  $('stageclear').classList.remove('hidden');renderStageList();
