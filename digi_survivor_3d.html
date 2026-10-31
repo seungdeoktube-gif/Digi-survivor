@@ -91,8 +91,8 @@ function makePartner(id){
  g.userData.species=id;return g;
 }
 const player=makePartner(selected);scene.add(player);player.position.y=0;
-function makeEnemy(){
- const g=new THREE.Group(),roll=Math.random(),boss=elapsed>0&&Math.floor(elapsed/75)>Math.floor((elapsed-.95)/75);
+function makeEnemy(forceBoss=false){
+ const g=new THREE.Group(),roll=Math.random(),boss=forceBoss;
  const type=boss?'boss':roll<.24?'runner':roll<.43?'brute':'grunt';
  const colors={grunt:0x7c5a9d,runner:0xd45d70,brute:0x687e9c,boss:0x9c344f},sizes={grunt:.58,runner:.42,brute:.82,boss:1.42};
  const radius=sizes[type],body=new THREE.Mesh(new THREE.IcosahedronGeometry(radius,type==='boss'?1:0),mat(colors[type]));
