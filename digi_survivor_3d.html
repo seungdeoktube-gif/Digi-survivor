@@ -71,11 +71,11 @@ for(let i=0;i<34;i++){const a=i/34*Math.PI*2,r=18+(i%3)*.7;const rock=new THREE.
 const mat=(c,rough=.8,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});
 const orange=mat(0xf18a35),cream=mat(0xffd99a),dark=mat(0x26334a),eye=mat(0x17263a,.3),claw=mat(0xf4e8d4),gold=mat(0xffd45e,.35,.15);
 const roster={
-agumon:{name:'아구몬',stage:'성장기',color:0xf18a35,hp:100,speed:6.4,fire:.66,damage:20},
-gabumon:{name:'파피몬',stage:'성장기',color:0x4f8cb8,hp:112,speed:6.1,fire:.78,damage:23},
-patamon:{name:'파닥몬',stage:'성장기',color:0xe9b85d,hp:92,speed:7.2,fire:.72,damage:18},
-biyomon:{name:'피요몬',stage:'성장기',color:0xd65a61,hp:96,speed:6.8,fire:.56,damage:17},
-tentomon:{name:'텐타몬',stage:'성장기',color:0xd8a83e,hp:108,speed:5.9,fire:.88,damage:28}
+agumon:{name:'아구몬',stage:'성장기',color:0xf18a35,hp:100,speed:6.4,fire:.66,damage:42},
+gabumon:{name:'파피몬',stage:'성장기',color:0x4f8cb8,hp:112,speed:6.1,fire:.78,damage:46},
+patamon:{name:'파닥몬',stage:'성장기',color:0xe9b85d,hp:92,speed:7.2,fire:.72,damage:38},
+biyomon:{name:'피요몬',stage:'성장기',color:0xd65a61,hp:96,speed:6.8,fire:.56,damage:36},
+tentomon:{name:'텐타몬',stage:'성장기',color:0xd8a83e,hp:108,speed:5.9,fire:.88,damage:54}
 };
 let selected='agumon';
 function disposeObject(o){if(!o)return;o.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.userData?.ownedTexture)n.userData.ownedTexture.dispose()});if(o.parent)o.parent.remove(o);else scene.remove(o)}
@@ -155,6 +155,26 @@ function makePartner(id){
   for(const x of [-1,1])for(const z of [-1,0,1]){const leg=detailSphere(.075,x*.7,.58,z*.29,leg,.8,3.2,.8);leg.rotation.z=x*.5;detailSphere(.09,x*.78,.24,z*.3,lightScale,1,.6,1.2)}
   for(const x of [-.42,.42]){const wing=detailSphere(.18,x*.9,1.2,-.48,lightScale,.7,1.8,.35);wing.rotation.z=x*.35}
  }
+
+ // Lightweight articulated rig: pivots are animated independently for visible movement.
+ const rigMat=mat(id==='agumon'?0xd66d2e:id==='gabumon'?0x31577e:id==='patamon'?0xe2b86e:id==='biyomon'?0xc84b59:0x8d333c);
+ const rigPart=(parent,w,h,d,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o};
+ const makePivot=(x,y,z,type,phase)=>{const p=new THREE.Group();p.position.set(x,y,z);p.userData.rigType=type;p.userData.phase=phase;g.add(p);return p};
+ if(id==='agumon'){
+  for(const side of [-1,1]){const arm=makePivot(side*.52,1.12,.02,'arm',side);rigPart(arm,.22,.58,.24,body,side*.06,-.26,.04);rigPart(arm,.24,.16,.25,claw,side*.06,-.55,.12);const legPivot=makePivot(side*.28,.42,.02,'leg',side);rigPart(legPivot,.3,.48,.32,body,0,-.19,.04);rigPart(legPivot,.32,.13,.42,ivory,0,-.4,.12)}
+  const tail=makePivot(0,.72,-.7,'tail',0);rigPart(tail,.2,.2,.65,body,0,0,-.3);const tip=new THREE.Mesh(new THREE.ConeGeometry(.16,.42,7),gold);tip.position.set(0,0,-.75);tip.rotation.x=Math.PI/2;tail.add(tip);
+ }else if(id==='gabumon'){
+  for(const side of [-1,1]){const arm=makePivot(side*.55,1.15,0,'arm',side);rigPart(arm,.2,.5,.2,body,side*.04,-.24,.05);rigPart(arm,.22,.13,.24,claw,side*.04,-.48,.1);const legPivot=makePivot(side*.3,.4,0,'leg',side);rigPart(legPivot,.28,.43,.3,leg,0,-.18,.03)}
+  for(const side of [-1,1]){const ear=makePivot(side*.68,1.8,-.05,'ear',side);rigPart(ear,.16,.46,.13,belly,side*.12,.16,0)}
+ }else if(id==='patamon'){
+  for(const side of [-1,1]){const wing=makePivot(side*.72,1.48,-.05,'wing',side);rigPart(wing,.25,.78,.1,accent,side*.2,-.16,-.02);rigPart(wing,.2,.42,.09,lightScale,side*.42,-.35,-.02);const legPivot=makePivot(side*.3,.38,.08,'leg',side);rigPart(legPivot,.22,.38,.22,belly,0,-.16,.02)}
+ }else if(id==='biyomon'){
+  for(const side of [-1,1]){const wing=makePivot(side*.55,1.45,-.05,'wing',side);rigPart(wing,.28,.66,.12,accent,side*.22,-.12,0);for(let j=0;j<3;j++)rigPart(wing,.13,.38,.1,lightScale,side*(.28+j*.13),-.34+j*.08,.04);const legPivot=makePivot(side*.28,.4,.02,'leg',side);rigPart(legPivot,.2,.42,.2,accent,0,-.18,.02);rigPart(legPivot,.24,.12,.32,gold,0,-.4,.1)}
+  const crest=makePivot(0,2.0,-.05,'crest',0);rigPart(crest,.12,.42,.12,gold,0,.16,0);
+ }else if(id==='tentomon'){
+  for(const side of [-1,1]){const wing=makePivot(side*.48,1.38,-.38,'wing',side);rigPart(wing,.42,.18,.62,lightScale,side*.2,0,-.16);for(let j=0;j<2;j++)rigPart(wing,.14,.1,.38,ivory,side*(.28+j*.12),.04,-.28);const arm=makePivot(side*.48,1.15,.25,'arm',side);rigPart(arm,.16,.5,.16,leg,side*.1,-.22,.02);const legPivot=makePivot(side*.62,.45,0,'leg',side);rigPart(legPivot,.15,.5,.15,leg,side*.05,-.2,0)}
+  const horn=makePivot(0,1.95,-.05,'crest',0);rigPart(horn,.12,.55,.12,accent,0,.22,0);
+ }
  g.userData.species=id;g.children.forEach((o,i)=>{o.userData.animBase={x:o.rotation.x,y:o.rotation.y,z:o.rotation.z,phase:i*.83};});return g;
 }
 const player=makePartner(selected);scene.add(player);player.position.y=0;
@@ -192,7 +212,7 @@ function makeEnemy(forceBoss=false){
   for(const s of [-1,1]){const wing=new THREE.Mesh(new THREE.ConeGeometry(.82,2.1,4),dark);wing.position.set(s*1.02,1.25,-.18);wing.rotation.z=s*-.9;wing.rotation.x=-.25;wing.scale.set(1,.8,.22);wing.castShadow=true;g.add(wing);cone(g,.12,.72,s*.48,.35,.05,red,0,s*.18)}
   const chest=sphere(g,.22,0,1.15,.49,glow,.8,1.1,.35);
  }
- const hp={grunt:24,runner:17,brute:76,boss:1250}[type]*(1+elapsed*.002);
+ const hp={grunt:19,runner:14,brute:58,boss:1050}[type]*(1+elapsed*.0015);
  g.userData={hp,maxHp:hp,speed:({grunt:1.45+Math.random()*.45,runner:2.55,brute:.82,boss:1.05})[type]+elapsed*.0015,hit:0,body:g.children[0],type,boss,baseMaterial:skin,contact:boss?22:type==='brute'?13:8,name:names[type],attackTimer:2.4+Math.random()*1.2,attackMode:false,knock:0,phase:Math.random()*6.28};
  g.scale.setScalar(type==='boss'?1.12:1);
  return g;
@@ -216,15 +236,15 @@ function spawnOrb(pos,value=1){const o=new THREE.Mesh(new THREE.IcosahedronGeome
 function floatingDamage(pos,value,kind='enemy'){const c=document.createElement('canvas');c.width=256;c.height=128;const x=c.getContext('2d');x.font='bold 68px system-ui, sans-serif';x.textAlign='center';x.lineWidth=10;x.strokeStyle='rgba(20,18,30,.9)';x.fillStyle=kind==='player'?'#ff5268':kind==='boss'?'#ffe16b':'#ffffff';x.strokeText(String(Math.round(value)),128,82);x.fillText(String(Math.round(value)),128,82);const tex=new THREE.CanvasTexture(c);tex.minFilter=THREE.LinearFilter;const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));sprite.userData.ownedTexture=tex;sprite.position.copy(pos);sprite.position.y+=.65;sprite.scale.set(1.35,.68,1);sprite.renderOrder=20;scene.add(sprite);pushEffect({mesh:sprite,vel:new THREE.Vector3(0,1.5,0),life:.85,max:.85,text:true})}
 function hitEnemy(e,damage){if(!e.parent)return;e.userData.hp-=damage;floatingDamage(e.position.clone().add(new THREE.Vector3(0,1.05,0)),damage,e.userData.boss?'boss':'enemy');e.userData.hit=.13;e.userData.body.material=hitMaterial;e.userData.knock=e.userData.boss?.12:.32;const p=e.position.clone().add(new THREE.Vector3(0,.7,0));addBurst(p,0xffc36b,2);if(e.userData.hp<=0){const pos=e.position.clone();addBurst(pos,e.userData.boss?0xff526e:0xffc36b,e.userData.boss?22:9);if(e.userData.boss){$('bossHud').style.display='none';toast('보스 격파! 대량 데이터 획득')}disposeObject(e);const i=enemies.indexOf(e);if(i>=0)enemies.splice(i,1);kills++;spawnOrb(pos,e.userData.boss?18:e.userData.type==='brute'?4:1+Math.floor(Math.random()*2));if(kills%20===0)toast('적 '+kills+'마리 격파!')}}
 function nearest(){let target=null,best=Infinity;for(const e of enemies){const d=e.position.distanceToSquared(player.position);if(d<best){best=d;target=e}}return target}
-function attack(){const target=nearest();if(!target)return;const p=makeProjectile();const colors={agumon:0xff9b3d,gabumon:0x83dfff,patamon:0xffe29a,biyomon:0xff765e,tentomon:0xffe15a};p.material=attackMats[selected];p.position.copy(player.position).add(new THREE.Vector3(0,1.1,0));p.userData={target,life:2,damage:damage*(evolved?1.7:1)};shots.push(p)}
+function attack(){const target=nearest();if(!target)return;const p=makeProjectile();const colors={agumon:0xff9b3d,gabumon:0x83dfff,patamon:0xffe29a,biyomon:0xff765e,tentomon:0xffe15a};p.material=attackMats[selected];p.position.copy(player.position).add(new THREE.Vector3(0,1.1,0));p.userData={target,life:2,damage:Math.round(damage*(evolved?1.85:1))};shots.push(p)}
 const upgrades=[
-{name:'화염의 힘',desc:'자동 공격 피해량 +35%',apply:()=>damage*=1.35},
+{name:'화염의 힘',desc:'자동 공격 피해량 +50%',apply:()=>damage*=1.5},
 {name:'강철 데이터',desc:'최대 HP +25, HP 회복',apply:()=>{maxHp+=25;hp=Math.min(maxHp,hp+35)}},
 {name:'가속 부스터',desc:'이동 속도 +18%',apply:()=>speed*=1.18},
 {name:'디지코어 흡수',desc:'경험치 획득 범위 +45%',apply:()=>magnet+=2.2},
 {name:'연속 발사',desc:'공격 속도 +18%',apply:()=>fireRate*=.82},
 {name:'회복 프로토콜',desc:'HP 40 회복',apply:()=>hp=Math.min(maxHp,hp+40)}
-];let damage=13,speed=6.4,magnet=2.6,fireRate=.66;
+];let damage=roster.agumon.damage,speed=6.4,magnet=2.6,fireRate=.66;
 function levelUp(){paused=true;$('levelUp').classList.remove('hidden');const list=$('choiceList');list.innerHTML='';const picks=[...upgrades].sort(()=>Math.random()-.5).slice(0,3);for(const u of picks){const b=document.createElement('button');b.className='choice';b.innerHTML='<b>'+u.name+'</b><small>'+u.desc+'</small>';b.onclick=()=>{u.apply();$('levelUp').classList.add('hidden');paused=false;toast(u.name+' 강화 완료')};list.appendChild(b)}}
 function makeEvolution(id){
  const g=makePartner(id),armor=mat(0xd8dce5,.55,.25),silver=mat(0x9eafc4,.45,.35),flame=mat(0xff6b35,.4,.1),wing=mat(0xb7d9f5,.65),horn=mat(0xffd45e,.4,.2);
@@ -274,10 +294,10 @@ for(let i=enemyShots.length-1;i>=0;i--){const s=enemyShots[i];s.life-=dt;s.mesh.
 for(let i=effects.length-1;i>=0;i--){const fx=effects[i];fx.life-=dt;if(fx.text){fx.mesh.position.addScaledVector(fx.vel,dt);fx.mesh.material.opacity=Math.max(0,fx.life/fx.max);fx.mesh.scale.multiplyScalar(1+dt*.22)}else if(fx.shock){const t=1-fx.life/fx.max;fx.mesh.scale.setScalar(1+t*8);fx.mesh.material.opacity=Math.max(0,fx.life/fx.max);if(fx.life<=0&&player.position.distanceTo(fx.boss.position)<7&&invuln<=0){hp-=18;invuln=.7;floatingDamage(player.position.clone().add(new THREE.Vector3(0,1.6,0)),18,'player');if(hp<=0){disposeObject(fx.mesh);effects.splice(i,1);endRun();return}}}else{fx.mesh.position.addScaledVector(fx.vel,dt);fx.vel.y-=5*dt;fx.mesh.scale.multiplyScalar(.985)}if(fx.life<=0){disposeObject(fx.mesh);effects.splice(i,1)}}
 collect(dt);ultimate=Math.min(100,ultimate+dt*1.15);
 camera.position.lerp(new THREE.Vector3(player.position.x,16,player.position.z+19),.08);camera.lookAt(player.position.x,0,player.position.z);
-player.position.y=Math.sin(elapsed*6)*.055;player.rotation.z=THREE.MathUtils.lerp(player.rotation.z,-move.x*.12,.16);player.rotation.x=THREE.MathUtils.lerp(player.rotation.x,move.y*.07,.16);for(const o of player.children){const b=o.userData.animBase;if(!b){o.userData.animBase={x:o.rotation.x,y:o.rotation.y,z:o.rotation.z,phase:Math.random()*6.28};continue}const swing=Math.sin(elapsed*10+b.phase);if(o.position.y<.48)o.rotation.x=b.x+swing*.24;else if(Math.abs(o.position.x)>.58)o.rotation.z=b.z+swing*.12;else o.rotation.z=THREE.MathUtils.lerp(o.rotation.z,b.z,.2)}
+player.position.y=Math.sin(elapsed*6)*.055;player.rotation.z=THREE.MathUtils.lerp(player.rotation.z,-move.x*.12,.16);player.rotation.x=THREE.MathUtils.lerp(player.rotation.x,move.y*.07,.16);for(const o of player.children){const rig=o.userData.rigType;if(rig){const ph=o.userData.phase||0,side=ph<0?-1:1,swing=Math.sin(elapsed*(rig==='wing'?13:rig==='leg'?10:7)+Math.abs(ph)*.7);if(rig==='wing')o.rotation.z=side*(.18+swing*.42);else if(rig==='arm')o.rotation.x=swing*.34;else if(rig==='leg')o.rotation.x=swing*.42;else if(rig==='tail')o.rotation.x=.18+Math.sin(elapsed*4)*.22;else if(rig==='ear')o.rotation.z=side*(.18+Math.sin(elapsed*5+side)*.12);else if(rig==='crest')o.rotation.z=Math.sin(elapsed*4)*.08;continue}const b=o.userData.animBase;if(!b){o.userData.animBase={x:o.rotation.x,y:o.rotation.y,z:o.rotation.z,phase:Math.random()*6.28};continue}const swing=Math.sin(elapsed*8+b.phase);if(o.position.y<.48)o.rotation.x=b.x+swing*.12;else if(Math.abs(o.position.x)>.58)o.rotation.z=b.z+swing*.06;else o.rotation.z=THREE.MathUtils.lerp(o.rotation.z,b.z,.2)}
 const boss=enemies.find(e=>e.userData.boss);$('bossHud').style.display=boss?'block':'none';if(boss)$('bossFill').style.width=Math.max(0,boss.userData.hp/boss.userData.maxHp*100)+'%';
 $('timer').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(Math.floor(elapsed%60)).padStart(2,'0');
-$('hpLabel').textContent='HP '+Math.max(0,Math.ceil(hp))+' / '+maxHp;$('hpFill').style.width=Math.max(0,hp/maxHp*100)+'%';$('killLabel').textContent='처치 '+kills;$('levelLabel').textContent='Lv. '+level+' · '+(evolved?'성숙기 데이터':'성장기 데이터');$('xpLabel').textContent=xp+' / '+xpNeed;$('xpFill').style.width=xp/xpNeed*100+'%';$('ultimate').textContent='필살기\n'+Math.floor(ultimate)+'%';$('ultimate').disabled=ultimate<100;
+$('hpLabel').textContent='HP '+Math.max(0,Math.ceil(hp))+' / '+maxHp;$('hpFill').style.width=Math.max(0,hp/maxHp*100)+'%';$('killLabel').textContent='처치 '+kills;$('levelLabel').textContent='Lv. '+level+' · 공격력 '+Math.round(damage)+' · '+(evolved?'성숙기':'성장기');$('xpLabel').textContent=xp+' / '+xpNeed;$('xpFill').style.width=xp/xpNeed*100+'%';$('ultimate').textContent='필살기\n'+Math.floor(ultimate)+'%';$('ultimate').disabled=ultimate<100;
 }
 function endRun(){running=false;paused=false;$('report').textContent='생존 시간 '+$('timer').textContent+' · 처치 '+kills+' · 도달 레벨 '+level+ (evolved?' · 진화 성공':'');$('ended').classList.remove('hidden')}
 function reset(){running=true;paused=false;for(const arr of [enemies,shots,enemyShots,orbs,effects])for(const item of arr)disposeObject(item.mesh||item);enemies.length=shots.length=enemyShots.length=orbs.length=effects.length=0;const cfg=roster[selected];for(const child of player.children.slice())disposeObject(child);const replacement=makePartner(selected);replacement.children.slice().forEach(o=>player.add(o));player.userData.species=selected;player.position.set(0,0,0);player.rotation.set(0,0,0);player.scale.setScalar(1);hp=maxHp=cfg.hp;xp=0;xpNeed=10;level=1;kills=0;elapsed=0;ultimate=0;evolved=false;damage=cfg.damage;speed=cfg.speed;magnet=2.6;fireRate=cfg.fire;attackTimer=0;spawnTimer=.4;invuln=0;player.visible=true;scene.add(player);$('nameLine').textContent=cfg.name+' · '+cfg.stage;$('ended').classList.add('hidden');$('bossHud').style.display='none';$('start').classList.add('hidden');$('paused').classList.add('hidden');$('levelUp').classList.add('hidden');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
