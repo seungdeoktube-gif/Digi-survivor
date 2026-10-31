@@ -112,7 +112,7 @@ function makeProjectile(){const m=new THREE.Mesh(new THREE.SphereGeometry(.18,10
 const enemies=[],shots=[],orbs=[],effects=[];let running=false,paused=false,elapsed=0,kills=0,hp=100,maxHp=100,xp=0,xpNeed=10,level=1,attackTimer=0,spawnTimer=0,ultimate=0,evolved=false,move={x:0,y:0},last=0,raf=0,invuln=0;
 function toast(t){const el=$('toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.opacity=0,1300)}
 function addEnemy(forceBoss=false){
- const a=Math.random()*Math.PI*2,r=forceBoss?24:19+Math.random()*5,g=makeEnemy();
+ const a=Math.random()*Math.PI*2,r=forceBoss?24:19+Math.random()*5,g=makeEnemy(forceBoss);
  if(forceBoss){g.userData.type='boss';g.userData.boss=true;g.userData.hp=g.userData.maxHp=1250+elapsed*8;g.scale.setScalar(1.18);$('bossHud').style.display='block';$('bossName').textContent='BOSS · 디지털 오염체';toast('경고! 보스 디지몬 출현!')}
  g.position.set(player.position.x+Math.cos(a)*r,0,player.position.z+Math.sin(a)*r);scene.add(g);enemies.push(g);
 }
