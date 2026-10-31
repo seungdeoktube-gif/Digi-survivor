@@ -99,7 +99,7 @@ function addEnemy(){const a=Math.random()*Math.PI*2,r=19+Math.random()*5,g=makeE
 function spawnOrb(pos,value=1){const o=new THREE.Mesh(new THREE.IcosahedronGeometry(.19,0),mat(0x52e4d4,.3,.25));o.position.set(pos.x,.38,pos.z);o.userData={value,life:28};scene.add(o);orbs.push(o)}
 function hitEnemy(e,damage){e.userData.hp-=damage;e.userData.hit=.12;e.userData.body.material=mat(0xffb1a5);if(e.userData.hp<=0){const p=e.position.clone();scene.remove(e);const i=enemies.indexOf(e);if(i>=0)enemies.splice(i,1);kills++;spawnOrb(p,1+Math.floor(Math.random()*2));if(kills%20===0)toast('적 '+kills+'마리 격파!')}}
 function nearest(){let target=null,best=Infinity;for(const e of enemies){const d=e.position.distanceToSquared(player.position);if(d<best){best=d;target=e}}return target}
-function attack(){const target=nearest();if(!target)return;const p=makeProjectile();const colors={agumon:0xff9b3d,gabumon:0x83dfff,patamon:0xffe29a,biyomon:0xff765e,tentomon:0xffe15a};p.material=mat(colors[selected],.35,.15);p.position.copy(player.position).add(new THREE.Vector3(0,1.1,0));p.userData={target,life:2,damage:(evolved?22:roster[selected].damage)};shots.push(p)}
+function attack(){const target=nearest();if(!target)return;const p=makeProjectile();const colors={agumon:0xff9b3d,gabumon:0x83dfff,patamon:0xffe29a,biyomon:0xff765e,tentomon:0xffe15a};p.material=mat(colors[selected],.35,.15);p.position.copy(player.position).add(new THREE.Vector3(0,1.1,0));p.userData={target,life:2,damage:damage*(evolved?1.7:1)};shots.push(p)}
 const upgrades=[
 {name:'화염의 힘',desc:'자동 공격 피해량 +35%',apply:()=>damage*=1.35},
 {name:'강철 데이터',desc:'최대 HP +25, HP 회복',apply:()=>{maxHp+=25;hp=Math.min(maxHp,hp+35)}},
