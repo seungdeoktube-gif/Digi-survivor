@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#09111f">
+<title>DIGI SURVIVOR 3D · Digital World</title>
+<style>
+:root{color-scheme:dark;--ink:#f4f7ff;--muted:#a8b8d3;--panel:#101c30eF;--line:#354966;--cyan:#54d9e8;--gold:#ffd46b}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#09111f;color:var(--ink);font-family:system-ui,-apple-system,sans-serif;touch-action:none;overscroll-behavior:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#app{position:fixed;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#1b3446,#09111f 72%)}
+#scene{position:absolute;inset:0;width:100%;height:100%;display:block}
+#top{position:absolute;z-index:3;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;display:grid;grid-template-columns:1fr auto;gap:8px;pointer-events:none}
+.panel{background:var(--panel);border:1px solid #50627d88;border-radius:13px;backdrop-filter:blur(10px);box-shadow:0 8px 28px #0005}
+#status{padding:10px 12px;min-width:0}#brand{font-size:11px;letter-spacing:2px;font-weight:900;color:#8de9f1}#nameLine{font-size:14px;font-weight:900;margin-top:2px}.meta{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);margin:7px 0 4px}.bar{height:9px;border-radius:9px;background:#26364c;overflow:hidden;border:1px solid #65758b66}.fill{height:100%;width:100%;transition:width .12s}.hp{background:linear-gradient(90deg,#ff6878,#ffad73)}.xp{background:linear-gradient(90deg,#43d9d1,#8ef2cf)}
+#rightHud{display:flex;flex-direction:column;gap:6px;align-items:stretch;pointer-events:auto}button{font:inherit;color:inherit;border:1px solid #627894;background:#172842dd;border-radius:11px;padding:9px 12px;font-weight:800;box-shadow:0 4px 12px #0003}button:active{transform:scale(.97)}#timer{font-size:19px;font-weight:950;text-align:center;padding:7px 12px;min-width:76px}
+#bottomHud{position:absolute;z-index:3;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));display:flex;justify-content:space-between;align-items:end;pointer-events:none}
+#stick{width:132px;height:132px;border-radius:50%;background:#172b45a8;border:2px solid #8ba4c566;position:relative;pointer-events:auto;touch-action:none;box-shadow:inset 0 0 22px #0006}
+#nub{position:absolute;width:52px;height:52px;left:38px;top:38px;border-radius:50%;background:linear-gradient(145deg,#c9faff,#55b9ce);border:2px solid #fff;box-shadow:0 4px 16px #0008;pointer-events:none}
+#actions{display:flex;gap:8px;align-items:end;pointer-events:auto}#ultimate{width:88px;height:88px;border-radius:50%;background:radial-gradient(circle at 35% 25%,#fff1a5,#f59b32 65%,#a94d26);border:3px solid #ffe6a0;color:#351b13;font-size:12px;font-weight:1000;box-shadow:0 0 22px #ffbd4a66}#ultimate:disabled{filter:grayscale(1);opacity:.55}#full{font-size:11px;padding:9px}
+#toast{position:absolute;z-index:4;top:26%;left:50%;transform:translate(-50%,-50%);font-weight:950;font-size:18px;text-align:center;text-shadow:0 3px 12px #000;pointer-events:none;opacity:0;transition:opacity .2s}
+.overlay{position:absolute;z-index:8;inset:0;background:#050b16d9;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)}.hidden{display:none!important}.modal{width:min(520px,100%);padding:22px;border-radius:20px;background:linear-gradient(150deg,#1b304a,#0d192b);border:1px solid #59708f;box-shadow:0 22px 80px #0009;text-align:center}.eyebrow{font-size:11px;letter-spacing:3px;color:#8de9f1;font-weight:900}.modal h1{font-size:clamp(28px,8vw,42px);line-height:1;margin:9px 0 10px}.modal p{color:#c0cde0;font-size:13px;line-height:1.6}.primary{width:100%;margin-top:12px;padding:14px;background:linear-gradient(100deg,#3db8c8,#69dfc3);border:0;color:#08202a;font-size:16px}.choices{display:grid;grid-template-columns:1fr;gap:9px;margin-top:16px}.choice{text-align:left;padding:13px;border-radius:13px;background:#1b304a;border:1px solid #617894}.choice b{display:block;color:#ffe08a;margin-bottom:3px}.choice small{color:#b9c9df}.hint{font-size:11px!important;color:#8299b8!important}
+#corner{position:absolute;z-index:2;right:14px;bottom:calc(112px + env(safe-area-inset-bottom));font-size:10px;color:#9cb0c9;text-align:right;pointer-events:none}
+@media(min-width:800px){#stick{width:148px;height:148px}#nub{left:44px;top:44px}#bottomHud{max-width:900px;left:50%;right:auto;width:calc(100% - 32px);transform:translateX(-50%)}}
+html.immersive,body.immersive{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;overflow:hidden!important}body.immersive #app{height:100vh;height:100dvh}
+</style>
+</head>
+<body>
+<div id="app">
+<canvas id="scene"></canvas>
+<div id="top">
+ <div id="status" class="panel">
+  <div id="brand">DIGITAL WORLD · SURVIVAL PROTOCOL</div><div id="nameLine">아구몬 · 성장기</div>
+  <div class="meta"><span id="hpLabel">HP 100 / 100</span><span id="killLabel">처치 0</span></div><div class="bar"><div id="hpFill" class="fill hp"></div></div>
+  <div class="meta"><span id="levelLabel">Lv. 1 · 데이터 경험치</span><span id="xpLabel">0 / 10</span></div><div class="bar"><div id="xpFill" class="fill xp" style="width:0%"></div></div>
+ </div>
+ <div id="rightHud"><div id="timer" class="panel">00:00</div><button id="pause">Ⅱ</button></div>
+</div>
+<div id="toast"></div>
+<div id="corner">AUTO ATTACK · MOVE TO SURVIVE</div>
+<div id="bottomHud"><div id="stick"><div id="nub"></div></div><div id="actions"><button id="full">⛶ 화면</button><button id="ultimate" disabled>필살기<br>0%</button></div></div>
+<div id="start" class="overlay"><div class="modal"><div class="eyebrow">A DIGITAL MONSTER SURVIVOR</div><h1>DIGI<br>SURVIVOR 3D</h1><p>디지몬과 함께 디지털 월드의 끝없는 적 무리를 돌파하라.<br>움직이면 자동으로 공격하고, 경험치를 모아 성장·진화한다.</p><p class="hint">아이폰: 왼쪽 가상 조이스틱으로 이동 · 오른쪽 필살기 버튼</p><button id="startBtn" class="primary">전투 시작</button></div></div>
+<div id="levelUp" class="overlay hidden"><div class="modal"><div class="eyebrow">DATA EVOLUTION</div><h1>성장 데이터 획득</h1><p>강화할 능력을 선택해.</p><div id="choiceList" class="choices"></div></div></div>
+<div id="paused" class="overlay hidden"><div class="modal"><div class="eyebrow">SYSTEM PAUSED</div><h1>일시 정지</h1><p>전투가 일시 정지됐어.</p><button id="resumeBtn" class="primary">계속하기</button></div></div>
+<div id="ended" class="overlay hidden"><div class="modal"><div class="eyebrow">MISSION REPORT</div><h1>전투 종료</h1><p id="report"></p><button id="retryBtn" class="primary">다시 도전</button></div></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id),canvas=$('scene');
+if(!window.THREE){$('start').querySelector('p').textContent='3D 엔진을 불러오지 못했어. 인터넷 연결을 확인하고 새로고침해줘.';return}
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b1723);scene.fog=new THREE.Fog(0x0b1723,24,72);
+const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,160);camera.position.set(0,16,19);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+scene.add(new THREE.HemisphereLight(0xa9d8ff,0x253321,2.1));
+const sun=new THREE.DirectionalLight(0xffe6bd,2.4);sun.position.set(-8,18,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(180,180),new THREE.MeshStandardMaterial({color:0x263d38,roughness:1}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+const grid=new THREE.GridHelper(180,90,0x52766b,0x38534d);grid.position.y=.012;grid.material.transparent=true;grid.material.opacity=.22;scene.add(grid);
+const arena=new THREE.Group();scene.add(arena);
+for(let i=0;i<34;i++){const a=i/34*Math.PI*2,r=18+(i%3)*.7;const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.45+(i%4)*.16,0),new THREE.MeshStandardMaterial({color:i%2?0x435e54:0x536b61,roughness:1}));rock.position.set(Math.cos(a)*r,.25,Math.sin(a)*r);rock.castShadow=true;arena.add(rock)}
+const mat=(c,rough=.8,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});
+const orange=mat(0xf18a35),cream=mat(0xffd99a),dark=mat(0x26334a),eye=mat(0x17263a,.3),claw=mat(0xf4e8d4),gold=mat(0xffd45e,.35,.15);
+function box(parent,w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+function makeAgumon(){const g=new THREE.Group();box(g,1.05,1.05,.8,orange,0,.9,0);box(g,.82,.68,.72,orange,0,1.65,.02);box(g,.85,.34,.65,cream,0,.86,.43);box(g,.62,.23,.35,cream,0,1.42,.39);box(g,.17,.24,.1,eye,-.22,1.77,.36);box(g,.17,.24,.1,eye,.22,1.77,.36);box(g,.055,.08,.03,claw,-.22,1.84,.42);box(g,.055,.08,.03,claw,.22,1.84,.42);box(g,.24,.12,.22,orange,-.34,2.08,0);box(g,.24,.12,.22,orange,.34,2.08,0);box(g,.28,.14,.42,orange,.68,.85,-.18);box(g,.3,.16,.36,orange,-.68,.85,-.18);box(g,.34,.38,.4,orange,-.34,.3,0);box(g,.34,.38,.4,orange,.34,.3,0);box(g,.13,.12,.18,claw,-.34,.12,.15);box(g,.13,.12,.18,claw,.34,.12,.15);g.userData.baseY=0;return g}
+const player=makeAgumon();scene.add(player);player.position.y=0;
+function makeEnemy(){const g=new THREE.Group(),body=new THREE.Mesh(new THREE.IcosahedronGeometry(.58,1),mat(0x7c5a9d));body.position.y=.58;body.castShadow=true;g.add(body);const e1=box(g,.13,.17,.09,mat(0xff7a9c),-.2,.72,.47),e2=box(g,.13,.17,.09,mat(0xff7a9c),.2,.72,.47);g.userData={hp:24,maxHp:24,speed:1.45+Math.random()*.45,hit:0,body};return g}
+function makeProjectile(){const m=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),mat(0xffb64e,.35,.15));scene.add(m);return m}
+const enemies=[],shots=[],orbs=[],effects=[];let running=false,paused=false,elapsed=0,kills=0,hp=100,maxHp=100,xp=0,xpNeed=10,level=1,attackTimer=0,spawnTimer=0,ultimate=0,evolved=false,move={x:0,y:0},last=0,raf=0,invuln=0;
+function toast(t){const el=$('toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.opacity=0,1300)}
+function addEnemy(){const a=Math.random()*Math.PI*2,r=19+Math.random()*5,g=makeEnemy();g.position.set(player.position.x+Math.cos(a)*r,0,player.position.z+Math.sin(a)*r);scene.add(g);enemies.push(g)}
+function spawnOrb(pos,value=1){const o=new THREE.Mesh(new THREE.IcosahedronGeometry(.19,0),mat(0x52e4d4,.3,.25));o.position.set(pos.x,.38,pos.z);o.userData={value,life:28};scene.add(o);orbs.push(o)}
+function hitEnemy(e,damage){e.userData.hp-=damage;e.userData.hit=.12;e.userData.body.material=mat(0xffb1a5);if(e.userData.hp<=0){const p=e.position.clone();scene.remove(e);const i=enemies.indexOf(e);if(i>=0)enemies.splice(i,1);kills++;spawnOrb(p,1+Math.floor(Math.random()*2));if(kills%20===0)toast('적 '+kills+'마리 격파!')}}
+function nearest(){let target=null,best=Infinity;for(const e of enemies){const d=e.position.distanceToSquared(player.position);if(d<best){best=d;target=e}}return target}
+function attack(){const target=nearest();if(!target)return;const p=makeProjectile();p.position.copy(player.position).add(new THREE.Vector3(0,1.1,0));const dir=target.position.clone().add(new THREE.Vector3(0,.7,0)).sub(p.position).normalize();p.userData={dir,target,life:2,damage:evolved?22:13};shots.push(p)}
+const upgrades=[
+{name:'화염의 힘',desc:'자동 공격 피해량 +35%',apply:()=>damage*=1.35},
+{name:'강철 데이터',desc:'최대 HP +25, HP 회복',apply:()=>{maxHp+=25;hp=Math.min(maxHp,hp+35)}},
+{name:'가속 부스터',desc:'이동 속도 +18%',apply:()=>speed*=1.18},
+{name:'디지코어 흡수',desc:'경험치 획득 범위 +45%',apply:()=>magnet+=2.2},
+{name:'연속 발사',desc:'공격 속도 +18%',apply:()=>fireRate*=.82},
+{name:'회복 프로토콜',desc:'HP 40 회복',apply:()=>hp=Math.min(maxHp,hp+40)}
+];let damage=13,speed=6.4,magnet=2.6,fireRate=.66;
+function levelUp(){paused=true;$('levelUp').classList.remove('hidden');const list=$('choiceList');list.innerHTML='';const picks=[...upgrades].sort(()=>Math.random()-.5).slice(0,3);for(const u of picks){const b=document.createElement('button');b.className='choice';b.innerHTML='<b>'+u.name+'</b><small>'+u.desc+'</small>';b.onclick=()=>{u.apply();$('levelUp').classList.add('hidden');paused=false;toast(u.name+' 강화 완료')};list.appendChild(b)}}
+function evolve(){if(evolved)return;evolved=true;player.scale.setScalar(1.22);const crest=box(player,.18,.52,.2,gold,0,2.3,-.02);crest.rotation.z=.12;box(player,.44,.25,.2,gold,0,1.25,.49);toast('진화! 그레이몬 계열로 성장');}
+function collect(){for(let i=orbs.length-1;i>=0;i--){const o=orbs[i];o.userData.life-=.016;const d=o.position.distanceTo(player.position.clone().add(new THREE.Vector3(0,.5,0)));if(d<magnet+2){o.position.lerp(player.position.clone().add(new THREE.Vector3(0,.6,0)),.12)}if(d<1.15){xp+=o.userData.value;scene.remove(o);orbs.splice(i,1);if(xp>=xpNeed){xp-=xpNeed;level++;xpNeed=Math.floor(xpNeed*1.32+4);if(level>=5)evolve();levelUp()}}else if(o.userData.life<=0){scene.remove(o);orbs.splice(i,1)}}}
+function update(dt){elapsed+=dt;invuln=Math.max(0,invuln-dt);attackTimer-=dt;spawnTimer-=dt;
+if(spawnTimer<=0){addEnemy();spawnTimer=Math.max(.16,.95-elapsed*.004)}
+const v=new THREE.Vector3(move.x,0,move.y);if(v.lengthSq()>1)v.normalize();player.position.addScaledVector(v,speed*dt);player.position.y=0;
+if(v.lengthSq()>.01){player.rotation.y=Math.atan2(v.x,v.z)}
+player.position.x=THREE.MathUtils.clamp(player.position.x,-65,65);player.position.z=THREE.MathUtils.clamp(player.position.z,-65,65);
+if(attackTimer<=0&&enemies.length){attack();attackTimer=fireRate}
+for(let i=enemies.length-1;i>=0;i--){const e=enemies[i],dir=player.position.clone().sub(e.position);dir.y=0;const d=dir.length();if(d>1.05){dir.normalize();e.position.addScaledVector(dir,e.userData.speed*dt);e.rotation.y=Math.atan2(dir.x,dir.z)}else if(invuln<=0){hp-=8;invuln=.65;toast('피격!');if(hp<=0){endRun();return}}e.position.y=Math.sin(elapsed*4+i)*.08;if(e.userData.hit>0){e.userData.hit-=dt;if(e.userData.hit<=0)e.userData.body.material=mat(0x7c5a9d)}}
+for(let i=shots.length-1;i>=0;i--){const p=shots[i];p.userData.life-=dt;if(!p.userData.target.parent){scene.remove(p);shots.splice(i,1);continue}const aim=p.userData.target.position.clone().add(new THREE.Vector3(0,.65,0));const dir=aim.sub(p.position).normalize();p.position.addScaledVector(dir,17*dt);if(p.position.distanceTo(aim)<.55){hitEnemy(p.userData.target,p.userData.damage);scene.remove(p);shots.splice(i,1)}else if(p.userData.life<=0){scene.remove(p);shots.splice(i,1)}}
+collect();ultimate=Math.min(100,ultimate+dt*1.15);
+camera.position.lerp(new THREE.Vector3(player.position.x,16,player.position.z+19),.08);camera.lookAt(player.position.x,0,player.position.z);
+player.position.y=Math.sin(elapsed*6)*.045;
+$('timer').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(Math.floor(elapsed%60)).padStart(2,'0');
+$('hpLabel').textContent='HP '+Math.max(0,Math.ceil(hp))+' / '+maxHp;$('hpFill').style.width=Math.max(0,hp/maxHp*100)+'%';$('killLabel').textContent='처치 '+kills;$('levelLabel').textContent='Lv. '+level+' · '+(evolved?'성숙기 데이터':'성장기 데이터');$('xpLabel').textContent=xp+' / '+xpNeed;$('xpFill').style.width=xp/xpNeed*100+'%';$('ultimate').textContent='필살기\n'+Math.floor(ultimate)+'%';$('ultimate').disabled=ultimate<100;
+}
+function endRun(){running=false;paused=false;$('report').textContent='생존 시간 '+$('timer').textContent+' · 처치 '+kills+' · 도달 레벨 '+level+ (evolved?' · 진화 성공':'');$('ended').classList.remove('hidden')}
+function reset(){for(const arr of [enemies,shots,orbs])for(const o of arr)scene.remove(o);enemies.length=shots.length=orbs.length=0;player.position.set(0,0,0);player.scale.setScalar(1);hp=maxHp=100;xp=0;xpNeed=10;level=1;kills=0;elapsed=0;ultimate=0;evolved=false;damage=13;speed=6.4;magnet=2.6;fireRate=.66;attackTimer=0;spawnTimer=.4;invuln=0;running=true;paused=false;$('ended').classList.add('hidden');$('start').classList.add('hidden');$('paused').classList.add('hidden');$('levelUp').classList.add('hidden');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
+function loop(now){if(!running)return;const dt=Math.min(.04,(now-last)/1000||0);last=now;if(!paused)update(dt);renderer.render(scene,camera);if(running)raf=requestAnimationFrame(loop)}
+$('startBtn').onclick=reset;$('retryBtn').onclick=reset;$('pause').onclick=()=>{if(!running)return;paused=true;$('paused').classList.remove('hidden')};$('resumeBtn').onclick=()=>{$('paused').classList.add('hidden');paused=false;last=performance.now()};
+$('ultimate').onclick=()=>{if(ultimate<100||!running)return;ultimate=0;const r=evolved?13:10;for(let i=enemies.length-1;i>=0;i--)if(enemies[i].position.distanceTo(player.position)<r)hitEnemy(enemies[i],evolved?180:95);const flash=new THREE.Mesh(new THREE.SphereGeometry(r,24,16),new THREE.MeshBasicMaterial({color:0xffbd55,transparent:true,opacity:.22,wireframe:true}));flash.position.set(player.position.x,.6,player.position.z);scene.add(flash);setTimeout(()=>scene.remove(flash),300);toast(evolved?'그레이몬 메가 플레임!':'베이비 플레임!')};
+const stick=$('stick'),nub=$('nub');let pointer=null;function setMove(e){if(e.cancelable)e.preventDefault();const r=stick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,max=r.width*.31,d=Math.hypot(dx,dy),k=d>max?max/d:1,x=dx*k,y=dy*k;move={x:x/max,y:y/max};nub.style.transform='translate('+x+'px,'+y+'px)'}function release(){pointer=null;move={x:0,y:0};nub.style.transform='translate(0,0)'}stick.addEventListener('pointerdown',e=>{e.preventDefault();pointer=e.pointerId;stick.setPointerCapture(pointer);setMove(e)});stick.addEventListener('pointermove',e=>{if(pointer===e.pointerId)setMove(e)});['pointerup','pointercancel','lostpointercapture'].forEach(n=>stick.addEventListener(n,release));stick.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});stick.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+$('full').onclick=async()=>{const active=document.body.classList.contains('immersive');if(active){document.body.classList.remove('immersive');document.documentElement.classList.remove('immersive');if(document.fullscreenElement)try{await document.exitFullscreen()}catch(e){}}else{document.body.classList.add('immersive');document.documentElement.classList.add('immersive');if(document.documentElement.requestFullscreen)try{await document.documentElement.requestFullscreen()}catch(e){}}};
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')move.x=-1;if(e.key==='ArrowRight'||e.key==='d')move.x=1;if(e.key==='ArrowUp'||e.key==='w')move.y=-1;if(e.key==='ArrowDown'||e.key==='s')move.y=1;if(e.key==='Escape'&&running){paused=!paused;$('paused').classList.toggle('hidden',!paused)}});addEventListener('keyup',()=>{move={x:0,y:0}});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7))});
+renderer.render(scene,camera);
+})();
+</script>
+</body>
+</html>
