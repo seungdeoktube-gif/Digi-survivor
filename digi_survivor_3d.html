@@ -109,8 +109,41 @@ const upgrades=[
 {name:'회복 프로토콜',desc:'HP 40 회복',apply:()=>hp=Math.min(maxHp,hp+40)}
 ];let damage=13,speed=6.4,magnet=2.6,fireRate=.66;
 function levelUp(){paused=true;$('levelUp').classList.remove('hidden');const list=$('choiceList');list.innerHTML='';const picks=[...upgrades].sort(()=>Math.random()-.5).slice(0,3);for(const u of picks){const b=document.createElement('button');b.className='choice';b.innerHTML='<b>'+u.name+'</b><small>'+u.desc+'</small>';b.onclick=()=>{u.apply();$('levelUp').classList.add('hidden');paused=false;toast(u.name+' 강화 완료')};list.appendChild(b)}}
-function evolve(){if(evolved)return;evolved=true;player.scale.setScalar(1.22);const crest=box(player,.18,.52,.2,gold,0,2.3,-.02);crest.rotation.z=.12;box(player,.44,.25,.2,gold,0,1.25,.49);const evoName={agumon:'그레이몬',gabumon:'가루몬',patamon:'엔젤몬',biyomon:'버드라몬',tentomon:'캅테리몬'}[selected];toast('진화! '+evoName+' 계열로 성장');$('nameLine').textContent=evoName+' · 성숙기';}
-function collect(){for(let i=orbs.length-1;i>=0;i--){const o=orbs[i];o.userData.life-=.016;const d=o.position.distanceTo(player.position.clone().add(new THREE.Vector3(0,.5,0)));if(d<magnet+2){o.position.lerp(player.position.clone().add(new THREE.Vector3(0,.6,0)),.12)}if(d<1.15){xp+=o.userData.value;scene.remove(o);orbs.splice(i,1);if(xp>=xpNeed){xp-=xpNeed;level++;xpNeed=Math.floor(xpNeed*1.32+4);if(level>=5)evolve();levelUp()}}else if(o.userData.life<=0){scene.remove(o);orbs.splice(i,1)}}}
+function makeEvolution(id){
+ const g=makePartner(id),armor=mat(0xd8dce5,.55,.25),silver=mat(0x9eafc4,.45,.35),flame=mat(0xff6b35,.4,.1),wing=mat(0xb7d9f5,.65),horn=mat(0xffd45e,.4,.2);
+ if(id==='agumon'){
+  part(g,.22,.95,.24,armor,-.48,1.72,-.08,0,-.28);part(g,.22,.95,.24,armor,.48,1.72,-.08,0,.28);
+  part(g,.28,.72,.25,horn,-.3,2.28,-.02,0,-.35);part(g,.28,.72,.25,horn,.3,2.28,-.02,0,.35);
+  part(g,.42,.2,.32,armor,0,1.02,.53);part(g,.35,.18,.28,flame,0,.72,-.5);
+ }else if(id==='gabumon'){
+  part(g,.3,.9,.28,armor,-.5,1.75,-.08,0,-.3);part(g,.3,.9,.28,armor,.5,1.75,-.08,0,.3);
+  part(g,.25,.7,.22,horn,-.32,2.18,-.05,0,-.3);part(g,.25,.7,.22,horn,.32,2.18,-.05,0,.3);
+  part(g,.72,.22,.28,silver,0,1.1,-.5);
+ }else if(id==='patamon'){
+  part(g,.32,1.05,.18,wing,-.95,1.55,0,0,-.65);part(g,.32,1.05,.18,wing,.95,1.55,0,0,.65);
+  part(g,.22,.85,.2,horn,0,2.05,-.18);part(g,.52,.18,.28,armor,0,1.2,.5);
+ }else if(id==='biyomon){
+  part(g,.34,1.15,.2,flame,-.78,1.65,0,0,-.55);part(g,.34,1.15,.2,flame,.78,1.65,0,0,.55);
+  part(g,.28,.9,.22,horn,0,2.25,-.1);part(g,.48,.22,.3,armor,0,1.1,.5);
+ }else if(id==='tentomon'){
+  const shell=new THREE.Mesh(new THREE.SphereGeometry(.72,12,10),mat(0xc9363c,.5,.15));shell.position.set(0,1.55,-.12);shell.scale.set(1.05,.85,.55);shell.castShadow=true;g.add(shell);
+  part(g,.22,.85,.22,silver,-.28,2.25,-.05,0,-.35);part(g,.22,.85,.22,silver,.28,2.25,-.05,0,.35);
+  for(const s of [-1,1]){part(g,.2,.6,.2,armor,s*.78,.8,.12,0,s*.45);part(g,.2,.6,.2,armor,s*.78,.8,-.28,0,s*.45)}
+ }
+ g.userData.species=id;g.userData.evolved=true;return g;
+}
+function evolve(){
+ if(evolved)return;
+ evolved=true;
+ const evoName={agumon:'그레이몬',gabumon:'가루몬',patamon:'엔젤몬',biyomon:'버드라몬',tentomon:'캅테리몬'}[selected];
+ const form=makeEvolution(selected);
+ player.clear();form.children.slice().forEach(o=>player.add(o));
+ player.userData.species=selected;player.scale.setScalar(1.16);
+ damage*=1.25;maxHp+=20;hp=Math.min(maxHp,hp+20);
+ toast('진화! '+evoName+' · 외형 및 능력 강화');
+ $('nameLine').textContent=evoName+' · 성숙기';
+}
+function collect(dt){for(let i=orbs.length-1;i>=0;i--){const o=orbs[i];o.userData.life-=dt;const target=player.position.clone().add(new THREE.Vector3(0,.5,0)),d=o.position.distanceTo(target);if(d<magnet+2)o.position.lerp(player.position.clone().add(new THREE.Vector3(0,.6,0)),Math.min(1,dt*7));if(d<1.15){xp+=o.userData.value;scene.remove(o);orbs.splice(i,1);if(xp>=xpNeed){xp-=xpNeed;level++;xpNeed=Math.floor(xpNeed*1.32+4);if(level>=5)evolve();levelUp();break}}else if(o.userData.life<=0){scene.remove(o);orbs.splice(i,1)}}}
 function update(dt){elapsed+=dt;invuln=Math.max(0,invuln-dt);attackTimer-=dt;spawnTimer-=dt;
 if(spawnTimer<=0){addEnemy();spawnTimer=Math.max(.16,.95-elapsed*.004)}
 const v=new THREE.Vector3(move.x,0,move.y);if(v.lengthSq()>1)v.normalize();player.position.addScaledVector(v,speed*dt);player.position.y=0;
@@ -119,7 +152,7 @@ player.position.x=THREE.MathUtils.clamp(player.position.x,-65,65);player.positio
 if(attackTimer<=0&&enemies.length){attack();attackTimer=fireRate}
 for(let i=enemies.length-1;i>=0;i--){const e=enemies[i],dir=player.position.clone().sub(e.position);dir.y=0;const d=dir.length();if(d>1.05){dir.normalize();e.position.addScaledVector(dir,e.userData.speed*dt);e.rotation.y=Math.atan2(dir.x,dir.z)}else if(invuln<=0){hp-=8;invuln=.65;toast('피격!');if(hp<=0){endRun();return}}e.position.y=Math.sin(elapsed*4+i)*.08;if(e.userData.hit>0){e.userData.hit-=dt;if(e.userData.hit<=0)e.userData.body.material=mat(0x7c5a9d)}}
 for(let i=shots.length-1;i>=0;i--){const p=shots[i];p.userData.life-=dt;if(!p.userData.target.parent){scene.remove(p);shots.splice(i,1);continue}const aim=p.userData.target.position.clone().add(new THREE.Vector3(0,.65,0));const dir=aim.sub(p.position).normalize();p.position.addScaledVector(dir,17*dt);if(p.position.distanceTo(aim)<.55){hitEnemy(p.userData.target,p.userData.damage);scene.remove(p);shots.splice(i,1)}else if(p.userData.life<=0){scene.remove(p);shots.splice(i,1)}}
-collect();ultimate=Math.min(100,ultimate+dt*1.15);
+collect(dt);ultimate=Math.min(100,ultimate+dt*1.15);
 camera.position.lerp(new THREE.Vector3(player.position.x,16,player.position.z+19),.08);camera.lookAt(player.position.x,0,player.position.z);
 player.position.y=Math.sin(elapsed*6)*.045;
 $('timer').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(Math.floor(elapsed%60)).padStart(2,'0');
@@ -130,7 +163,24 @@ function reset(){for(const arr of [enemies,shots,orbs])for(const o of arr)scene.
 function loop(now){if(!running)return;const dt=Math.min(.04,(now-last)/1000||0);last=now;if(!paused)update(dt);renderer.render(scene,camera);if(running)raf=requestAnimationFrame(loop)}
 document.querySelectorAll('.rosterCard').forEach(btn=>btn.addEventListener('click',()=>{selected=btn.dataset.digi;document.querySelectorAll('.rosterCard').forEach(x=>x.classList.toggle('selected',x===btn))}));
 $('startBtn').onclick=reset;$('retryBtn').onclick=reset;$('pause').onclick=()=>{if(!running)return;paused=true;$('paused').classList.remove('hidden')};$('resumeBtn').onclick=()=>{$('paused').classList.add('hidden');paused=false;last=performance.now()};
-$('ultimate').onclick=()=>{if(ultimate<100||!running)return;ultimate=0;const r=evolved?13:10;for(let i=enemies.length-1;i>=0;i--)if(enemies[i].position.distanceTo(player.position)<r)hitEnemy(enemies[i],evolved?180:95);const flash=new THREE.Mesh(new THREE.SphereGeometry(r,24,16),new THREE.MeshBasicMaterial({color:0xffbd55,transparent:true,opacity:.22,wireframe:true}));flash.position.set(player.position.x,.6,player.position.z);scene.add(flash);setTimeout(()=>scene.remove(flash),300);toast(evolved?'그레이몬 메가 플레임!':'베이비 플레임!')};
+$('ultimate').onclick=()=>{
+ if(ultimate<100||!running)return;ultimate=0;
+ const radius=evolved?13:10,damageMap={agumon:115,gabumon:75,patamon:65,biyomon:82,tentomon:95},names={agumon:'베이비 플레임',gabumon:'블리자드 팡',patamon:'에어 샷',biyomon:'메테오 윙',tentomon:'슈퍼 쇼크'};
+ const radiusMap={agumon:10,gabumon:12,patamon:14,biyomon:11,tentomon:9};
+ const r=radiusMap[selected]+(evolved?3:0);
+ const power=damageMap[selected]*(evolved?1.8:1);
+ for(let i=enemies.length-1;i>=0;i--){
+  const e=enemies[i],dist=e.position.distanceTo(player.position);
+  if(dist<r){
+   if(selected==='gabumon'||selected==='patamon')e.userData.speed*=.25;
+   hitEnemy(e,power);
+  }
+ }
+ const colors={agumon:0xff7438,gabumon:0x83dfff,patamon:0xffe7a6,biyomon:0xff7858,tentomon:0xffe45c};
+ const flash=new THREE.Mesh(new THREE.SphereGeometry(r,24,16),new THREE.MeshBasicMaterial({color:colors[selected],transparent:true,opacity:.24,wireframe:true}));
+ flash.position.set(player.position.x,.6,player.position.z);scene.add(flash);setTimeout(()=>scene.remove(flash),360);
+ toast((evolved?({agumon:'메가 플레임',gabumon:'코큐토스 브레스',patamon:'헤븐즈 너클',biyomon:'메테오 윙',tentomon:'헤라클레스 캅테리'}[selected]+'!'):names[selected]+'!'));
+};
 const stick=$('stick'),nub=$('nub');let pointer=null;function setMove(e){if(e.cancelable)e.preventDefault();const r=stick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,max=r.width*.31,d=Math.hypot(dx,dy),k=d>max?max/d:1,x=dx*k,y=dy*k;move={x:x/max,y:y/max};nub.style.transform='translate('+x+'px,'+y+'px)'}function release(){pointer=null;move={x:0,y:0};nub.style.transform='translate(0,0)'}stick.addEventListener('pointerdown',e=>{e.preventDefault();pointer=e.pointerId;stick.setPointerCapture(pointer);setMove(e)});stick.addEventListener('pointermove',e=>{if(pointer===e.pointerId)setMove(e)});['pointerup','pointercancel','lostpointercapture'].forEach(n=>stick.addEventListener(n,release));stick.addEventListener('touchstart',e=>e.preventDefault(),{passive:false});stick.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 $('full').onclick=async()=>{const active=document.body.classList.contains('immersive');if(active){document.body.classList.remove('immersive');document.documentElement.classList.remove('immersive');if(document.fullscreenElement)try{await document.exitFullscreen()}catch(e){}}else{document.body.classList.add('immersive');document.documentElement.classList.add('immersive');if(document.documentElement.requestFullscreen)try{await document.documentElement.requestFullscreen()}catch(e){}}};
 addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')move.x=-1;if(e.key==='ArrowRight'||e.key==='d')move.x=1;if(e.key==='ArrowUp'||e.key==='w')move.y=-1;if(e.key==='ArrowDown'||e.key==='s')move.y=1;if(e.key==='Escape'&&running){paused=!paused;$('paused').classList.toggle('hidden',!paused)}});addEventListener('keyup',()=>{move={x:0,y:0}});
