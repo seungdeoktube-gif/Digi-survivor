@@ -138,7 +138,7 @@ function addShockwave(boss){const ring=new THREE.Mesh(new THREE.TorusGeometry(1,
 const enemies=[],shots=[],enemyShots=[],orbs=[],effects=[];
 const attackMats={agumon:mat(0xff9b3d,.35,.15),gabumon:mat(0x83dfff,.35,.15),patamon:mat(0xffe29a,.35,.15),biyomon:mat(0xff765e,.35,.15),tentomon:mat(0xffe15a,.35,.15)};
 const fxMatCache=new Map();
-function fxMat(color){if(!fxMatCache.has(color))fxMatCache.set(color,mat(color,.35,.1));return fxMat(color)}
+function fxMat(color){if(!fxMatCache.has(color))fxMatCache.set(color,mat(color,.35,.1));return fxMatCache.get(color)}
 function pushEffect(fx){if(effects.length>=220){const old=effects.shift();scene.remove(old.mesh)}effects.push(fx)}let running=false,paused=false,elapsed=0,kills=0,hp=100,maxHp=100,xp=0,xpNeed=10,level=1,attackTimer=0,spawnTimer=0,ultimate=0,evolved=false,move={x:0,y:0},last=0,raf=0,invuln=0;
 function toast(t){const el=$('toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.opacity=0,1300)}
 function addEnemy(forceBoss=false){
