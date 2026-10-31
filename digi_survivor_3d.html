@@ -167,163 +167,81 @@ function disposeObject(o){if(!o)return;o.traverse(n=>{if(n.geometry)n.geometry.d
 function box(parent,w,h,d,m,x,y,z){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
 function part(parent,w,h,d,m,x,y,z,rx=0,rz=0){const o=box(parent,w,h,d,m,x,y,z);o.rotation.x=rx;o.rotation.z=rz;return o}
 function makePartner(id){
- const g=new THREE.Group(),cfg=roster[id],body=mat(cfg.color),belly=mat(id==='gabumon'?0xe9e4d4:id==='patamon'?0xf4d9a0:0xf5d4b0),accent=mat(id==='gabumon'?0x31557a:id==='patamon'?0xb98243:id==='biyomon'?0xf2b0a4:id==='tentomon'?0x8f4148:0xe8a23c),leg=mat(id==='tentomon'?0x784b39:cfg.color);
- if(id==='agumon'){part(g,1.05,1.05,.8,body,0,.9,0);part(g,.82,.68,.72,body,0,1.65,.02);part(g,.85,.34,.65,belly,0,.86,.43);part(g,.62,.23,.35,belly,0,1.42,.39);part(g,.17,.24,.1,eye,-.22,1.77,.36);part(g,.17,.24,.1,eye,.22,1.77,.36);part(g,.24,.12,.22,body,-.34,2.08,0);part(g,.24,.12,.22,body,.34,2.08,0);part(g,.28,.14,.42,body,.68,.85,-.18);part(g,.3,.16,.36,body,-.68,.85,-.18)}
- if(id==='gabumon'){part(g,1.1,.85,.9,body,0,.82,0);part(g,.85,.7,.8,belly,0,1.48,.02);part(g,.9,.48,.25,accent,0,1.48,.45);part(g,.18,.22,.1,eye,-.23,1.63,.42);part(g,.18,.22,.1,eye,.23,1.63,.42);part(g,.26,.8,.25,belly,-.48,1.65,-.05,0,-.22);part(g,.26,.8,.25,belly,.48,1.65,-.05,0,.22);part(g,.3,.35,.35,leg,-.35,.28,0);part(g,.3,.35,.35,leg,.35,.28,0);part(g,.6,.16,.55,accent,0,.55,-.52)}
- if(id==='patamon'){part(g,1,.85,.85,body,0,.86,0);part(g,.82,.65,.75,body,0,1.5,.05);part(g,.62,.26,.3,belly,0,1.23,.43);part(g,.16,.2,.08,eye,-.2,1.62,.39);part(g,.16,.2,.08,eye,.2,1.62,.39);part(g,.26,.85,.22,accent,-.78,1.48,0,0,-.42);part(g,.26,.85,.22,accent,.78,1.48,0,0,.42);part(g,.3,.3,.3,belly,-.34,.28,0);part(g,.3,.3,.3,belly,.34,.28,0)}
- if(id==='biyomon'){part(g,.9,.95,.8,body,0,.9,0);part(g,.75,.65,.7,body,0,1.55,.02);part(g,.55,.22,.28,accent,0,1.32,.42);part(g,.15,.22,.08,eye,-.2,1.65,.36);part(g,.15,.22,.08,eye,.2,1.65,.36);part(g,.22,.75,.2,accent,-.65,1.4,0,0,-.5);part(g,.22,.75,.2,accent,.65,1.4,0,0,.5);part(g,.18,.55,.18,mat(0xffd45e),0,2.02,-.02);part(g,.28,.3,.28,accent,-.3,.28,0);part(g,.28,.3,.28,accent,.3,.28,0)}
- if(id==='tentomon'){part(g,1.15,.85,1.05,body,0,.88,0);part(g,.82,.65,.75,accent,0,1.48,.05);part(g,.45,.3,.3,belly,0,1.15,.43);part(g,.15,.18,.08,eye,-.2,1.58,.39);part(g,.15,.18,.08,eye,.2,1.58,.39);part(g,.18,.45,.18,leg,-.55,.28,.18);part(g,.18,.45,.18,leg,.55,.28,.18);part(g,.18,.45,.18,leg,-.55,.28,-.18);part(g,.18,.45,.18,leg,.55,.28,-.18);part(g,.18,.55,.18,accent,-.22,2.02,-.05,0,-.4);part(g,.18,.55,.18,accent,.22,2.02,-.05,0,.4)}
- // Rounded facial details and signature anatomy improve recognition at gameplay scale.
- const orb=(r,x,y,z,m,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,14,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;g.add(o);return o};
- const ivory=mat(0xfff2d8),pupil=mat(0x17243b,.25),shine=mat(0xffffff,.2);
- const eyeY=id==='agumon'?1.77:id==='gabumon'?1.63:id==='patamon'?1.62:id==='biyomon'?1.65:1.58;
- const eyeZ=id==='agumon'?.405:id==='gabumon'?.465:id==='patamon'?.435:id==='biyomon'?.405:.435;
- for(const s of [-1,1]){orb(.125,s*.22,eyeY,eyeZ,ivory,1,.95,.55);orb(.072,s*.22,eyeY-.005,eyeZ+.052,pupil,1,1,.65);orb(.025,s*.22-.018,eyeY+.035,eyeZ+.09,shine,.8,.8,.6)}
+ const g=new THREE.Group(),cfg=roster[id],M=(c,r=.56,m=.06)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+ const body=M(cfg.color),dark=M(id==='agumon'?0xb95724:id==='gabumon'?0x294c70:id==='patamon'?0xb88743:id==='biyomon'?0x9b3948:0x812b34),light=M(id==='gabumon'?0xf0eadb:id==='patamon'?0xffdda0:id==='biyomon'?0xffa2a4:id==='tentomon'?0xffd75c:0xffd3a0),ink=M(0x282334,.4),white=M(0xfff4df,.28),iris=M(id==='gabumon'?0x277aa2:id==='patamon'?0x754c25:id==='biyomon'?0x85313b:0x563c2b,.25),metal=M(0xc9d8e8,.3,.4);
+ const ball=(p,r,x,y,z,m,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,24,18),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=o.receiveShadow=true;p.add(o);return o};
+ const cap=(p,r,len,x,y,z,m,rx=0,rz=0)=>{const o=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,6,12),m);o.position.set(x,y,z);o.rotation.set(rx,0,rz);o.castShadow=o.receiveShadow=true;p.add(o);return o};
+ const spike=(p,r,h,x,y,z,m,rx=0,rz=0)=>{const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,12),m);o.position.set(x,y,z);o.rotation.set(rx,0,rz);o.castShadow=o.receiveShadow=true;p.add(o);return o};
+ const eye=(x,y,z)=>{ball(g,.125,x,y,z,white,1,1,.52);ball(g,.074,x,y-.005,z+.055,iris,1,1,.6);ball(g,.026,x-.02,y+.04,z+.09,white,.8,.8,.5)};
+ const pivot=(x,y,z,type,phase)=>{const p=new THREE.Group();p.position.set(x,y,z);p.userData.rigType=type;p.userData.phase=phase;g.add(p);return p};
+ // New organic body silhouettes, species-specific proportions and facial planes.
  if(id==='agumon'){
-  const tail=part(g,.28,.3,1.12,body,-.08,.72,-.82,.18,-.08);tail.geometry.dispose();tail.geometry=new THREE.ConeGeometry(.25,1.2,7);tail.rotation.x=Math.PI/2+.12;tail.position.set(-.08,.68,-.92);
-  orb(.16,-.08,1.36,.43,mat(0xf5c18b),1,.5,.55);
-  for(const s of [-1,1]){part(g,.16,.18,.22,claw,s*.36,.18,.2);part(g,.13,.12,.22,ivory,s*.36,.1,.29)}
+  ball(g,.58,0,.88,0,body,1.05,1.05,.92);ball(g,.49,0,1.68,.08,body,1.04,.9,.88);ball(g,.37,0,1.47,.47,body,1.15,.62,.72);ball(g,.34,0,.87,.48,light,1,.86,.24);
+  ball(g,.2,0,1.34,.69,ink,1.1,.42,.5);for(const s of [-1,1])spike(g,.045,.12,s*.07,1.38,.76,white,Math.PI);
+  eye(-.22,1.79,.48);eye(.22,1.79,.48);for(const s of [-1,1]){spike(g,.16,.32,s*.34,2.12,-.02,dark,0,s*.32);cap(g,.14,.4,s*.57,1.05,.04,body,0,-s*.28);ball(g,.17,s*.58,.2,.12,body);for(let j=0;j<3;j++)spike(g,.05,.15,s*(.48+j*.1),.1,.29,white,Math.PI/2)}
+  const t=cap(g,.13,.9,-.06,.68,-.76,body,1.12,0);t.rotation.z=-.15;spike(g,.14,.34,-.06,.62,-1.35,metal,Math.PI/2);
+  for(let j=0;j<3;j++)ball(g,.05,0,.68+j*.13,.69,dark,1,.5,.4);
  }else if(id==='gabumon'){
-  const pelt=new THREE.Mesh(new THREE.SphereGeometry(.72,14,12),mat(0xe9e5d7));pelt.position.set(0,1.18,-.27);pelt.scale.set(1.02,.9,.78);pelt.castShadow=true;g.add(pelt);
-  for(const s of [-1,1]){part(g,.18,.3,.16,accent,s*.43,1.83,-.03,0,s*.22);part(g,.13,.16,.18,claw,s*.32,.18,.22)}
-  part(g,.22,.18,.48,accent,0,.7,-.83,.2,0);
+  ball(g,.59,0,.83,0,body,1.12,.9,1.02);ball(g,.46,0,1.56,.08,body,1,.88,.9);ball(g,.56,0,1.27,-.25,light,1.1,1.05,.82);ball(g,.32,0,1.34,.47,light,1.12,.72,.65);
+  ball(g,.19,0,1.2,.68,ink,1,.42,.5);eye(-.22,1.66,.49);eye(.22,1.66,.49);
+  for(const s of [-1,1]){spike(g,.16,.42,s*.4,1.98,-.02,light,0,s*.35);cap(g,.17,.62,s*.53,1.13,-.12,light,0,-s*.35);ball(g,.16,s*.43,.2,.15,body)}
+  for(let i=0;i<7;i++){const x=(i-3)*.14;const q=ball(g,.045, x,1.25,-.79,dark,.75,3.5,.5);q.rotation.z=x*1.5}ball(g,.27,0,.72,-.62,dark,1,.55,1.1);
  }else if(id==='patamon'){
-  const earMat=mat(0xd59b4b);for(const s of [-1,1]){const ear=part(g,.22,.72,.18,earMat,s*.9,1.52,-.02,0,s*.58);ear.scale.set(1.05,1.05,1.1);orb(.16,s*.34,.28,.18,claw,.9,.5,.8)}
-  orb(.12,0,1.27,.52,mat(0xc98a45),1,.65,.55);
+  ball(g,.62,0,.92,0,body,1.08,.92,.98);ball(g,.48,0,1.65,.04,body,1.02,.9,.9);ball(g,.31,0,1.42,.45,light,1.1,.68,.58);eye(-.21,1.74,.46);eye(.21,1.74,.46);
+  ball(g,.15,0,1.28,.69,ink,1,.4,.5);for(const s of [-1,1]){const e=ball(g,.23,s*.88,1.45,-.04,light,.78,2.6,.42);e.rotation.z=-s*.52;const i=ball(g,.13,s*1.0,1.45,.13,dark,.7,2.2,.24);i.rotation.z=-s*.52;ball(g,.18,s*.34,.22,.18,light,1,.62,.9)}ball(g,.14,0,1.96,-.08,light,1.1,.72,.65);
  }else if(id==='biyomon'){
-  const beak=new THREE.Mesh(new THREE.ConeGeometry(.22,.42,6),gold);beak.position.set(0,1.39,.53);beak.rotation.x=Math.PI/2;beak.castShadow=true;g.add(beak);
-  for(const s of [-1,1]){part(g,.16,.22,.16,claw,s*.32,.17,.12);part(g,.12,.42,.14,mat(0xffd45e),s*.18,2.12,-.02,0,s*.3)}
- }else if(id==='tentomon'){
-  const shell=new THREE.Mesh(new THREE.SphereGeometry(.62,16,12),mat(0xc83e42,.5,.12));shell.position.set(0,1.28,-.36);shell.scale.set(1.08,.78,.78);shell.castShadow=true;g.add(shell);
-  part(g,.1,.75,.1,mat(0x30384b),0,1.6,-.91);
-  for(const s of [-1,1]){part(g,.14,.52,.14,leg,s*.62,.62,.12,0,s*.42);part(g,.14,.52,.14,leg,s*.62,.62,-.36,0,s*.42)}
+  ball(g,.5,0,.88,0,body,1,.95,.9);ball(g,.4,0,1.55,.02,body,1,.92,.88);ball(g,.28,0,1.34,.4,light,1.1,.68,.6);spike(g,.2,.34,0,1.36,.67,metal,Math.PI/2);eye(-.19,1.65,.42);eye(.19,1.65,.42);
+  for(const s of [-1,1]){const w=ball(g,.2,s*.62,1.2,-.02,dark,.85,2.7,.6);w.rotation.z=-s*.35;for(let j=0;j<4;j++){const f=ball(g,.105,s*(.65+j*.12),1.12-j*.12,-.08,body,.72,2.8,.55);f.rotation.z=-s*(.35+j*.12)}ball(g,.17,s*.27,.18,.1,metal,1,.6,.85);spike(g,.075,.2,s*.27,.09,.25,white,Math.PI/2)}
+  for(let j=0;j<3;j++)spike(g,.09,.28,(j-1)*.15,1.98,-.08,body,0,(j-1)*.18);
+ }else{
+  ball(g,.62,0,.91,0,body,1.18,.9,1.12);ball(g,.43,0,1.52,.13,body,1,.92,.88);ball(g,.58,0,1.36,-.28,dark,1.12,.82,.86);ball(g,.42,0,1.43,-.52,metal,1.05,.78,.38);ball(g,.27,0,1.25,.48,light,1.05,.72,.55);eye(-.19,1.62,.48);eye(.19,1.62,.48);
+  for(const s of [-1,1]){spike(g,.14,.58,s*.25,2.05,-.06,body,0,s*.28);for(let j=0;j<3;j++){const x=s*(.52+j*.08),z=.18-j*.3;cap(g,.07,.36,x,.58,z,dark,0,s*.8);ball(g,.09,x,.4,z,metal)}const w=ball(g,.19,s*.55,1.28,-.48,light,.75,1.65,.22);w.rotation.z=s*.28}
+  for(let i=-1;i<=1;i++){const p=ball(g,.22,i*.28,1.57,-.63,body,.65,1.2,.32);p.rotation.z=i*.18}
  }
-
- // Character-detail pass: layered anatomy, facial silhouettes and signature markings.
- const detailSphere=(r,x,y,z,m,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;g.add(o);return o};
- const detailCone=(r,h,x,y,z,m,rx=0,rz=0)=>{const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,9),m);o.position.set(x,y,z);o.rotation.set(rx,0,rz);o.castShadow=true;g.add(o);return o};
- const detailMat=c=>mat(c,.72,.04),darkScale=detailMat(id==='agumon'?0xb85a24:id==='gabumon'?0x263e5e:id==='patamon'?0xb27b3d:id==='biyomon'?0x9d3547:0x7d2733),lightScale=detailMat(id==='agumon'?0xffc16c:id==='gabumon'?0xf6f0df:id==='patamon'?0xffdf9a:id==='biyomon'?0xffa1a5:0xffd65c),mouth=detailMat(0x38212a),tooth=detailMat(0xfff4df);
- // A shaped muzzle, jaw and mouth give the face readable volume at mobile scale.
- if(id==='agumon'){
-  detailSphere(.29,0,1.48,.48,body,1.15,.7,.85);detailSphere(.23,0,1.29,.49,mouth,1.1,.42,.75);
-  for(const x of [-.13,.13])detailCone(.055,.16,x,1.31,.67,tooth,Math.PI,0);
-  for(const x of [-.25,.25]){detailSphere(.07,x,1.91,.39,darkScale,1,.65,.5);detailSphere(.045,x,1.91,.44,lightScale,1,.7,.45)}
-  for(let row=0;row<3;row++)part(g,.48,.055,.035,detailMat(0xc9824a),0,.68+row*.13,.43);
-  for(const x of [-.43,.43]){part(g,.16,.22,.22,claw,x,.16,.26);detailCone(.07,.18,x,.08,.39,tooth,Math.PI/2,0)}
-  detailCone(.12,.35,0,2.12,-.05,darkScale,0,Math.PI);
- }else if(id==='gabumon'){
-  detailSphere(.31,0,1.36,.47,lightScale,1.1,.82,.75);detailSphere(.25,0,1.18,.49,mouth,1,.48,.65);
-  for(const x of [-.13,.13])detailCone(.05,.14,x,1.2,.65,tooth,Math.PI,0);
-  for(const x of [-.5,.5]){detailCone(.12,.32,x,1.95,-.1,horn,0,x<0?-.25:.25);part(g,.13,.34,.055,darkScale,x,1.35,.47,0,x*.3)}
-  // Distinct blue tiger-like stripes across the pelt.
-  for(const x of [-.48,-.24,.24,.48])part(g,.075,.34,.045,darkScale,x,1.26,-.78,0,x*.5);
-  for(const x of [-.45,.45]){detailSphere(.13,x,.2,.25,lightScale,.8,.55,.8);detailCone(.06,.16,x,.12,.4,tooth,Math.PI/2,0)}
- }else if(id==='patamon'){
-  detailSphere(.25,0,1.34,.49,lightScale,1.1,.72,.65);detailSphere(.2,0,1.18,.5,mouth,1,.42,.5);
-  for(const x of [-.12,.12])detailCone(.045,.12,x,1.2,.64,tooth,Math.PI,0);
-  // Layered ear membranes and wing-feather tips.
-  for(const x of [-1,1]){const ear=detailSphere(.16,x*1.02,1.58,-.02,accent,.8,2.7,.48);ear.rotation.z=x*.48;detailSphere(.12,x*.78,1.45,.13,lightScale,.75,1.8,.35)}
-  detailSphere(.12,0,1.83,-.05,lightScale,1.2,.7,.55);
-  for(const x of [-.62,.62]){detailSphere(.1,x,1.2,-.25,lightScale,1,2,.45);detailSphere(.08,x*.82,1.02,-.29,accent,1,1.8,.5)}
- }else if(id==='biyomon'){
-  detailSphere(.22,0,1.38,.48,lightScale,1,.65,.6);detailSphere(.13,0,1.24,.5,mouth,1,.5,.5);
-  detailCone(.2,.36,0,1.38,.7,gold,Math.PI/2,0);
-  for(const x of [-.3,.3]){detailSphere(.11,x,1.88,-.08,lightScale,.8,1.7,.65);detailCone(.1,.28,x,2.12,-.08,accent,0,x*.35)}
-  // Feathered wings with individual layered vanes.
-  for(const x of [-1,1]){for(let j=0;j<3;j++){const feather=detailSphere(.12,x*(.63+j*.13),1.36-j*.13,-.08,accent,.75,2.4,.55);feather.rotation.z=-x*(.35+j*.18)}}
-  for(const x of [-.25,.25]){detailSphere(.11,x,.2,.22,gold,1,.6,.8);detailCone(.08,.2,x,.1,.36,tooth,Math.PI/2,0)}
- }else if(id==='tentomon'){
-  // Segmented red carapace, dark seams, horn and six articulated legs.
-  detailSphere(.12,0,2.16,-.12,lightScale,.8,1.9,.8);
-  for(const x of [-.42,-.14,.14,.42]){const seam=part(g,.045,.42,.045,darkScale,x,1.43,-.78,0,x*.4);seam.rotation.x=-.2}
-  for(const x of [-1,1]){detailCone(.1,.34,x*.23,2.04,-.02,lightScale,0,x*.22);detailSphere(.11,x*.22,1.72,.42,lightScale,.8,.75,.45);detailCone(.07,.18,x*.22,1.57,.55,mouth,Math.PI,0)}
-  for(const x of [-1,1])for(const z of [-1,0,1]){const leg=detailSphere(.075,x*.7,.58,z*.29,leg,.8,3.2,.8);leg.rotation.z=x*.5;detailSphere(.09,x*.78,.24,z*.3,lightScale,1,.6,1.2)}
-  for(const x of [-.42,.42]){const wing=detailSphere(.18,x*.9,1.2,-.48,lightScale,.7,1.8,.35);wing.rotation.z=x*.35}
+ // Animated pivots retain the original gait/wing animation contract.
+ for(const s of [-1,1]){
+  if(id==='agumon'||id==='gabumon'){const a=pivot(s*.49,1.12,.02,'arm',s);cap(a,.13,.35,s*.04,-.22,.02,body);ball(a,.15,s*.05,-.42,.1,body);const l=pivot(s*.28,.43,.02,'leg',s);cap(l,.16,.34,0,-.17,.02,body);ball(l,.18,0,-.34,.12,light)}
+  else if(id==='patamon'||id==='biyomon'){const w=pivot(s*.62,1.42,-.05,'wing',s);const f=ball(w,.16,s*.22,-.15,-.02,id==='patamon'?light:body,.8,2.4,.48);f.rotation.z=-s*.3;for(let j=0;j<3;j++){const q=ball(w,.09,s*(.32+j*.1),-.3-j*.08,.02,id==='patamon'?dark:light,.7,2,.4);q.rotation.z=-s*.4}const l=pivot(s*.28,.4,.02,'leg',s);cap(l,.11,.28,0,-.15,.02,light);ball(l,.14,0,-.3,.12,metal)}
+  else{const w=pivot(s*.45,1.38,-.35,'wing',s);const q=ball(w,.16,s*.22,0,-.18,light,.8,1.3,2.1);q.rotation.z=s*.12;const a=pivot(s*.45,1.1,.24,'arm',s);cap(a,.09,.34,s*.08,-.2,.02,dark);for(let j=0;j<3;j++){const l=pivot(s*(.35+j*.16),.52,-.24+j*.24,'leg',s);cap(l,.07,.28,s*.08,-.16,0,dark);ball(l,.08,s*.1,-.29,.04,metal)}}
  }
-
- // Lightweight articulated rig: pivots are animated independently for visible movement.
- const rigMat=mat(id==='agumon'?0xd66d2e:id==='gabumon'?0x31577e:id==='patamon'?0xe2b86e:id==='biyomon'?0xc84b59:0x8d333c);
- const rigPart=(parent,w,h,d,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o};
- const makePivot=(x,y,z,type,phase)=>{const p=new THREE.Group();p.position.set(x,y,z);p.userData.rigType=type;p.userData.phase=phase;g.add(p);return p};
- if(id==='agumon'){
-  for(const side of [-1,1]){const arm=makePivot(side*.52,1.12,.02,'arm',side);rigPart(arm,.22,.58,.24,body,side*.06,-.26,.04);rigPart(arm,.24,.16,.25,claw,side*.06,-.55,.12);const legPivot=makePivot(side*.28,.42,.02,'leg',side);rigPart(legPivot,.3,.48,.32,body,0,-.19,.04);rigPart(legPivot,.32,.13,.42,ivory,0,-.4,.12)}
-  const tail=makePivot(0,.72,-.7,'tail',0);rigPart(tail,.2,.2,.65,body,0,0,-.3);const tip=new THREE.Mesh(new THREE.ConeGeometry(.16,.42,7),gold);tip.position.set(0,0,-.75);tip.rotation.x=Math.PI/2;tail.add(tip);
- }else if(id==='gabumon'){
-  for(const side of [-1,1]){const arm=makePivot(side*.55,1.15,0,'arm',side);rigPart(arm,.2,.5,.2,body,side*.04,-.24,.05);rigPart(arm,.22,.13,.24,claw,side*.04,-.48,.1);const legPivot=makePivot(side*.3,.4,0,'leg',side);rigPart(legPivot,.28,.43,.3,leg,0,-.18,.03)}
-  for(const side of [-1,1]){const ear=makePivot(side*.68,1.8,-.05,'ear',side);rigPart(ear,.16,.46,.13,belly,side*.12,.16,0)}
- }else if(id==='patamon'){
-  for(const side of [-1,1]){const wing=makePivot(side*.72,1.48,-.05,'wing',side);rigPart(wing,.25,.78,.1,accent,side*.2,-.16,-.02);rigPart(wing,.2,.42,.09,lightScale,side*.42,-.35,-.02);const legPivot=makePivot(side*.3,.38,.08,'leg',side);rigPart(legPivot,.22,.38,.22,belly,0,-.16,.02)}
- }else if(id==='biyomon'){
-  for(const side of [-1,1]){const wing=makePivot(side*.55,1.45,-.05,'wing',side);rigPart(wing,.28,.66,.12,accent,side*.22,-.12,0);for(let j=0;j<3;j++)rigPart(wing,.13,.38,.1,lightScale,side*(.28+j*.13),-.34+j*.08,.04);const legPivot=makePivot(side*.28,.4,.02,'leg',side);rigPart(legPivot,.2,.42,.2,accent,0,-.18,.02);rigPart(legPivot,.24,.12,.32,gold,0,-.4,.1)}
-  const crest=makePivot(0,2.0,-.05,'crest',0);rigPart(crest,.12,.42,.12,gold,0,.16,0);
- }else if(id==='tentomon'){
-  for(const side of [-1,1]){const wing=makePivot(side*.48,1.38,-.38,'wing',side);rigPart(wing,.42,.18,.62,lightScale,side*.2,0,-.16);for(let j=0;j<2;j++)rigPart(wing,.14,.1,.38,ivory,side*(.28+j*.12),.04,-.28);const arm=makePivot(side*.48,1.15,.25,'arm',side);rigPart(arm,.16,.5,.16,leg,side*.1,-.22,.02);const legPivot=makePivot(side*.62,.45,0,'leg',side);rigPart(legPivot,.15,.5,.15,leg,side*.05,-.2,0)}
-  const horn=makePivot(0,1.95,-.05,'crest',0);rigPart(horn,.12,.55,.12,accent,0,.22,0);
- }
- 
- // Sculpted finish: layered anatomy, soft organic forms and species markings.
- const sm=c=>new THREE.MeshStandardMaterial({color:c,roughness:.55,metalness:.08});
- const so=(r,x,y,z,m,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,20,16),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;g.add(o);return o};
- const sp=(x,y,z,sx,sy,sz,m,rz=0)=>{const o=so(1,x,y,z,m,sx,sy,sz);o.rotation.z=rz;return o};
- const seam=sm(id==='agumon'?0xb85a24:id==='gabumon'?0x263e5e:id==='patamon'?0xb27b3d:id==='biyomon'?0x963746:0x7c2933),hi=sm(id==='agumon'?0xffbd70:id==='gabumon'?0xf4efe1:id==='patamon'?0xffe2a0:id==='biyomon'?0xffa0a2:0xffdf65),ink=sm(0x211d2a),ivoryDetailX=sm(0xfff1d8);
- if(id==='agumon'){sp(0,1.34,.57,.48,.24,.18,ink);for(const x of [-.15,.15])so(.06,x,1.37,.69,ivoryDetailX,.7,1.5,.55);for(const x of [-.37,.37]){sp(x,1.78,.36,.12,.17,.08,seam,x*.5);sp(x*.6,1.93,.39,.1,.08,.07,hi)}for(let j=0;j<3;j++)for(const x of [-.27,.27])sp(x,.72+j*.13,.43,.07,.035,.025,seam);so(.13,0,.68,-1.42,hi)}
- else if(id==='gabumon'){sp(0,1.18,-.28,.58,.5,.48,hi);for(const x of [-1,1]){so(.13,x*.47,1.72,-.13,hi,.75,1.3,.7);sp(x*.43,1.32,.46,.09,.25,.06,seam,x*.25);so(.07,x*.28,.22,.26,ivoryDetailX)}for(let i=0;i<5;i++){const x=(i-2)*.2;sp(x,1.28,-.69,.045,.19,.035,seam,x*.7)}sp(0,1.13,.54,.28,.12,.1,ink)}
- else if(id==='patamon'){sp(0,1.28,.52,.38,.19,.12,ink);for(const x of [-1,1]){sp(x*.96,1.55,-.02,.22,.78,.13,hi,x*.52);sp(x*1.08,1.48,.06,.12,.58,.08,accent,x*.52);so(.13,x*.33,.22,.22,ivoryDetailX,.9,.5,.8)}sp(0,1.87,-.12,.16,.22,.08,hi)}
- else if(id==='biyomon'){sp(0,1.25,.54,.25,.18,.12,ink);for(const x of [-1,1]){for(let j=0;j<4;j++)sp(x*(.55+j*.1),1.37-j*.1,-.08,.11,.32,.09,hi,-x*(.35+j*.08));sp(x*.24,1.93,-.1,.11,.28,.09,accent);so(.12,x*.28,.2,.2,gold,1,.55,.8)}sp(0,1.49,.65,.18,.22,.16,gold)}
- else if(id==='tentomon'){sp(0,1.38,-.39,.56,.38,.42,sm(0xc8343d));for(const x of [-1,1]){sp(x*.31,1.42,-.75,.055,.34,.045,ink,x*.18);so(.11,x*.23,1.68,.43,hi,.8,.7,.55);so(.07,x*.23,1.51,.53,ink,.8,.7,.5)}for(const x of [-1,1])for(let j=0;j<3;j++){const xx=x*(.53+j*.08);sp(xx,.58,(j-1)*.28,.075,.29,.07,accent,x*.55);so(.085,xx*1.12,.24,(j-1)*.28,hi,.9,.55,1.2)}sp(0,2.15,-.13,.12,.38,.12,hi)}
-
- g.userData.species=id;g.children.forEach((o,i)=>{o.userData.animBase={x:o.rotation.x,y:o.rotation.y,z:o.rotation.z,phase:i*.83};});return g;
+ if(id==='agumon'||id==='gabumon')for(const s of [-1,1]){const l=pivot(s*.28,.43,.02,'leg',s);cap(l,.15,.3,0,-.16,.02,body)}
+ if(id==='agumon'){const t=pivot(0,.72,-.65,'tail',0);cap(t,.12,.65,0,0,-.35,body,1.1,0)}
+ if(id==='gabumon')for(const s of [-1,1]){const e=pivot(s*.65,1.8,-.05,'ear',s);cap(e,.11,.42,s*.12,.18,0,light,0,-s*.45)}
+ if(id==='biyomon'){const c=pivot(0,2,-.05,'crest',0);spike(c,.1,.35,0,.15,0,metal)}
+ if(id==='tentomon'){const c=pivot(0,1.92,-.05,'crest',0);spike(c,.12,.55,0,.2,0,light)}
+ g.userData.species=id;g.children.forEach((o,i)=>o.userData.animBase={x:o.rotation.x,y:o.rotation.y,z:o.rotation.z,phase:i*.71});return g;
 }
 const player=makePartner(selected);scene.add(player);player.position.y=0;
 const enemyLooks={grunt:{skin:mat(0x8752a6),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xff6e8a,.3,.15)},runner:{skin:mat(0x73b84f),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xff6e8a,.3,.15)},brute:{skin:mat(0x8b3c32),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xff6e8a,.3,.15)},boss:{skin:mat(0x44334f),pale:mat(0xd8c7e8),red:mat(0xe64b59),dark:mat(0x20243b),glow:mat(0xffdf66,.3,.15)}};
 const hitMaterial=mat(0xffb1a5),orbMaterial=mat(0x52e4d4,.3,.25),bossShotMaterial=mat(0xff416b,.3,.2);
 function makeEnemy(forceBoss=false){
- const g=new THREE.Group(),roll=Math.random(),boss=forceBoss;
- const type=boss?'boss':roll<.24?'runner':roll<.43?'brute':'grunt';
- const names={grunt:'피코데블몬',runner:'쿠네몬',brute:'쿠와가몬',boss:'데블몬'};
- const sizes={grunt:.62,runner:.48,brute:.88,boss:1.35};
- const radius=sizes[type];
- const look=enemyLooks[type],{skin,pale,red,dark,glow}=look;
- const sphere=(parent,r,x,y,z,m, sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,12,10),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;parent.add(o);return o};
- const cone=(parent,r,h,x,y,z,m,rx=0,rz=0)=>{const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,8),m);o.position.set(x,y,z);o.rotation.x=rx;o.rotation.z=rz;o.castShadow=true;parent.add(o);return o};
+ const g=new THREE.Group(),roll=Math.random(),boss=forceBoss,type=boss?'boss':roll<.24?'runner':roll<.43?'brute':'grunt';
+ const names={grunt:'피코데블몬',runner:'쿠네몬',brute:'쿠와가몬',boss:'데블몬'},skin={grunt:0x68458c,runner:0x83b94f,brute:0x8b3b32,boss:0x332b43}[type],accent={grunt:0xc09be0,runner:0xc9df79,brute:0xd86b45,boss:0x9c779e}[type];
+ const M=(c,r=.5,m=.12)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m}),base=M(skin),trim=M(accent),dark=M(0x211d30,.4),glow=new THREE.MeshStandardMaterial({color:type==='boss'?0xffd45d:0xff637f,emissive:type==='boss'?0x8a2d22:0x4d102d,emissiveIntensity:1.15,roughness:.28}),ivory=M(0xffe8d0,.32);
+ const ball=(p,r,x,y,z,m,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,22,16),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=o.receiveShadow=true;p.add(o);return o};
+ const cone=(p,r,h,x,y,z,m,rx=0,rz=0)=>{const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,12),m);o.position.set(x,y,z);o.rotation.set(rx,0,rz);o.castShadow=true;p.add(o);return o};
+ const cap=(p,r,len,x,y,z,m,rx=0,rz=0)=>{const o=new THREE.Mesh(new THREE.CapsuleGeometry(r,len,5,10),m);o.position.set(x,y,z);o.rotation.set(rx,0,rz);o.castShadow=true;p.add(o);return o};
+ const eyes=(y,z,sep)=>{for(const s of [-1,1]){ball(g,.12,s*sep,y,z,glow,1.1,1,.55);ball(g,.045,s*sep-.02,y+.02,z+.055,ivory,.8,.8,.45)}};
  if(type==='grunt'){
-  // PicoDevimon: small purple bat-like vampire rookie.
-  sphere(g,.42,0,.52,0,skin,1,.95,.82);sphere(g,.34,0,1.02,.02,skin,1,.9,.85);
-  for(const s of [-1,1]){sphere(g,.09,s*.17,1.08,.29,glow);cone(g,.13,.32,s*.22,1.34,-.02,red,0,s*.35);cone(g,.38,.72,s*.58,.75,-.12,skin,0,s*.95);cone(g,.12,.28,s*.62,.72,-.12,red,0,s*.95)}
-  cone(g,.13,.32,0,.12,.2,pale); 
+  ball(g,.38,0,.58,0,base,1.08,1,.9);ball(g,.34,0,1.12,.06,base,1,.98,.9);ball(g,.23,0,1.02,.39,trim,1.2,.58,.55);eyes(1.18,.43,.16);
+  for(const s of [-1,1]){cone(g,.13,.42,s*.22,1.47,-.05,trim,0,s*.5);const w=ball(g,.13,s*.52,.83,-.08,dark,.8,2.5,.3);w.rotation.z=-s*.85;cone(g,.08,.3,s*.62,.7,.05,trim,0,s*.7);cap(g,.09,.32,s*.25,.25,.02,base,0,-s*.18)}
+  cone(g,.12,.34,0,.16,.3,ivory,Math.PI);cap(g,.07,.62,0,.52,-.56,dark,.9);cone(g,.08,.22,0,.52,-.95,trim,Math.PI/2);
  }else if(type==='runner'){
-  // Kunemon: low, long-bodied insect with antennae and many legs.
-  sphere(g,.43,0,.55,0,skin,1.35,.75,1.05);sphere(g,.3,0,.91,.3,skin,1,.9,.9);
-  for(const s of [-1,1]){cone(g,.11,.62,s*.18,1.42,.32,skin,0,s*.22);sphere(g,.075,s*.18,1.7,.32,glow);for(let j=0;j<3;j++){const leg=cone(g,.09,.55,s*(.35+j*.05),.35,(j-1)*.36,skin,0,s*.9);}}
-  for(const s of [-1,1])sphere(g,.075,s*.13,1,.55,glow);
+  for(let i=0;i<4;i++)ball(g,.32,0,.55,-.55+i*.32,i%2?base:trim,1.18,.78,.86);ball(g,.3,0,.95,.5,base,1,.92,.9);ball(g,.2,0,.86,.77,trim,1.1,.65,.5);eyes(1.03,.88,.13);
+  for(const s of [-1,1]){cap(g,.055,.38,s*.12,1.35,.52,base,0,-s*.12);ball(g,.075,s*.12,1.57,.52,glow);for(let j=0;j<3;j++){const x=s*(.34+j*.03),z=.35-j*.38;cap(g,.07,.32,x,.35,z,base,0,s*.72);ball(g,.08,x,.18,z,trim)}}
+  for(let i=0;i<3;i++)ball(g,.09,0,.48,-.72+i*.34,trim);
  }else if(type==='brute'){
-  // Kuwagamon: armored stag-beetle demon with oversized pincers.
-  sphere(g,.62,0,.78,0,skin,1.15,1.05,1);sphere(g,.43,0,1.48,.08,red,1,.8,.85);
-  for(const s of [-1,1]){cone(g,.2,.95,s*.3,2.12,-.02,dark,0,s*.38);cone(g,.28,.82,s*.8,1.23,.28,red,0,s*.95);cone(g,.18,.65,s*.45,.28,.05,dark,0,s*.25)}
-  sphere(g,.1,-.16,1.55,.43,glow);sphere(g,.1,.16,1.55,.43,glow);
+  ball(g,.66,0,.8,-.08,base,1.15,1.12,1.08);ball(g,.42,0,1.47,.13,trim,1.05,.92,.9);ball(g,.4,0,1.28,.46,base,1,.7,.55);eyes(1.54,.51,.17);ball(g,.55,0,1.05,-.42,dark,1.12,.78,.82);
+  for(const s of [-1,1]){cone(g,.17,.95,s*.3,2.12,-.05,dark,0,s*.3);cap(g,.12,.58,s*.48,1.24,.42,trim,0,s*.82);cone(g,.1,.38,s*.72,1.58,.46,ivory,0,s*.8);cap(g,.16,.5,s*.48,.42,.08,base,0,-s*.3)}
+  for(const s of [-1,1])for(let j=0;j<3;j++){const x=s*(.57+j*.09),z=.18-j*.3;cap(g,.075,.36,x,.62,z,dark,0,s*.8);ball(g,.09,x,.4,z,trim)}for(let i=0;i<3;i++)ball(g,.18,(i-1)*.22,1.02,.57,dark,.7,.5,.3);
  }else{
-  // Devimon: tall dark fallen angel with horns and broad wings.
-  sphere(g,.62,0,.92,0,skin,1,.95,.72);sphere(g,.45,0,1.72,.04,skin,1,.95,.82);
-  sphere(g,.13,-.17,1.78,.43,glow);sphere(g,.13,.17,1.78,.43,glow);
-  cone(g,.2,.82,-.3,2.28,-.05,red,0,-.35);cone(g,.2,.82,.3,2.28,-.05,red,0,.35);
-  for(const s of [-1,1]){const wing=new THREE.Mesh(new THREE.ConeGeometry(.82,2.1,4),dark);wing.position.set(s*1.02,1.25,-.18);wing.rotation.z=s*-.9;wing.rotation.x=-.25;wing.scale.set(1,.8,.22);wing.castShadow=true;g.add(wing);cone(g,.12,.72,s*.48,.35,.05,red,0,s*.18)}
-  const chest=sphere(g,.22,0,1.15,.49,glow,.8,1.1,.35);
+  ball(g,.48,0,.88,0,base,1.05,1.15,.78);ball(g,.34,0,1.73,.03,base,1,.98,.82);ball(g,.25,0,1.58,.38,dark,1.05,.72,.48);eyes(1.82,.43,.15);ball(g,.22,0,1.14,.42,glow,.9,1.2,.42);ball(g,.52,0,1.02,-.28,dark,1.1,.78,.7);
+  for(const s of [-1,1]){cone(g,.14,.82,s*.23,2.3,-.02,trim,0,s*.3);const w=ball(g,.16,s*.93,1.27,-.2,dark,.72,3.8,.48);w.rotation.z=-s*.55;for(let j=0;j<3;j++)cone(g,.2,.92,s*(1.1+j*.2),1.12-j*.2,-.28,dark,0,-s*(.55+j*.13));cap(g,.12,.55,s*.53,.55,.02,base,0,-s*.25);ball(g,.17,s*.35,.24,.08,trim)}
+  for(const s of [-1,1])cap(g,.11,.68,s*.22,.32,.02,base,0,-s*.12);for(let i=0;i<4;i++)ball(g,.22,0,1.38-i*.16,.44,trim,1.05,.14,.24);
  }
- 
- // Enemy sculpt pass: armor layering, facial planes and signature anatomy.
- const em=c=>new THREE.MeshStandardMaterial({color:c,roughness:.48,metalness:.18});
- const eb=(r,x,y,z,m,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,18,14),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;g.add(o);return o};
- const es=(r,h,x,y,z,m,rz=0)=>{const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,9),m);o.position.set(x,y,z);o.rotation.z=rz;o.castShadow=true;g.add(o);return o};
- const armor=em(type==='grunt'?0x583b78:type==='runner'?0x477e3e:type==='brute'?0x5c2428:0x29243b),edge=em(type==='grunt'?0xb78ad4:type==='runner'?0xb4d875:type==='brute'?0xd66b43:0x8b718f),black=em(0x201a2b),fang=em(0xffe8cb);
- if(type==='grunt'){eb(.27,0,.82,.28,black,1,.55,.5);eb(.18,0,.9,.48,red,1,.45,.35);for(const x of [-1,1]){es(.14,.48,x*.28,1.42,.02,armor,x*.28);eb(.11,x*.58,.72,-.12,edge,.7,1.8,.35);es(.055,.36,x*.72,.55,-.13,red,x*.8);eb(.045,x*.17,1.12,.36,fang,.8,1.2,.6)}es(.12,.3,0,.18,.32,fang,Math.PI)}
- else if(type==='runner'){for(let i=0;i<4;i++)eb(.31,0,.57,-.48+i*.3,i%2?skin:armor,1.2,.72,.78);for(const x of [-1,1]){es(.09,.58,x*.16,1.46,.35,edge,x*.18);eb(.09,x*.16,1.77,.35,glow);es(.08,.24,x*.12,.82,.56,black,x*.4)}for(const x of [-1,1])for(let j=0;j<3;j++){const leg=eb(.07,x*(.38+j*.03),.36,(j-1)*.34,armor,.8,3.1,.8);leg.rotation.z=x*.5;eb(.08,x*(.48+j*.03),.18,(j-1)*.34,edge)}}
- else if(type==='brute'){eb(.54,0,1.05,-.22,armor,1.12,.75,.9);eb(.42,0,1.47,.12,red,1,.9,.78);for(const x of [-1,1]){es(.2,1.12,x*.27,2.28,-.08,black,x*.22);es(.28,.92,x*.82,1.23,.38,edge,x*.95);es(.13,.55,x*.44,.32,.08,black,x*.25);eb(.1,x*.17,1.58,.48,glow);eb(.18,x*.62,.85,-.2,armor,.8,1.4,.8)}eb(.2,0,.83,.48,black,1.2,.45,.4);for(let i=0;i<3;i++)es(.07,.2,(i-1)*.13,.84,.68,fang,Math.PI)}
- else{eb(.34,0,1.2,.35,black,.9,1.25,.35);for(let i=0;i<4;i++)eb(.36,0,1.42-i*.16,.36,edge,1.05,.12,.22);eb(.32,0,1.73,.38,skin,.9,1.05,.68);for(const x of [-1,1]){es(.16,.72,x*.34,2.42,-.02,edge,x*.34);eb(.24,x*.72,1.42,-.06,armor,1.5,1,.75);es(.12,.42,x*.92,1.12,.25,fang,x*.55);for(let j=0;j<3;j++){const feather=eb(.14,x*(1.1+j*.18),1.36-j*.22,-.34,black,.65,2.7,.45);feather.rotation.z=-x*(.5+j*.16)}eb(.1,x*.17,1.84,.57,glow,.8,1.1,.45)}eb(.16,0,1.14,.57,glow,.8,1.25,.35)}
-
  const hp={grunt:24,runner:17,brute:76,boss:1250}[type]*(1+elapsed*.002);
- g.userData={hp,maxHp:hp,speed:({grunt:1.45+Math.random()*.45,runner:2.55,brute:.82,boss:1.05})[type]+elapsed*.0015,hit:0,body:g.children[0],type,boss,baseMaterial:skin,contact:boss?22:type==='brute'?13:8,name:names[type],attackTimer:2.4+Math.random()*1.2,attackMode:false,knock:0,phase:Math.random()*6.28};
- g.scale.setScalar(type==='boss'?1.12:1);
- return g;
+ g.userData={hp,maxHp:hp,speed:({grunt:1.45+Math.random()*.45,runner:2.55,brute:.82,boss:1.05})[type]+elapsed*.0015,hit:0,body:g.children[0],type,boss,baseMaterial:base,contact:boss?22:type==='brute'?13:8,name:names[type],attackTimer:2.4+Math.random()*1.2,attackMode:false,knock:0,phase:Math.random()*6.28};
+ g.scale.setScalar(({grunt:.82,runner:.78,brute:1.02,boss:1.16})[type]);return g;
 }
 function makeProjectile(){const geo=selected==='gabumon'?new THREE.OctahedronGeometry(.23,0):selected==='biyomon'?new THREE.ConeGeometry(.2,.48,8):selected==='tentomon'?new THREE.TetrahedronGeometry(.25):selected==='patamon'?new THREE.TorusGeometry(.17,.07,6,12):new THREE.SphereGeometry(.22,12,10);const m=new THREE.Mesh(geo,attackMats[selected]);scene.add(m);return m}
 function addBurst(pos,color=0xffc36b,count=7){for(let i=0;i<count;i++){const material=fxMat(color);const m=new THREE.Mesh(new THREE.SphereGeometry(.07+Math.random()*.06,6,5),material);m.position.copy(pos);scene.add(m);const v=new THREE.Vector3((Math.random()-.5)*5,Math.random()*3,(Math.random()-.5)*5);pushEffect({mesh:m,vel:v,life:.35+Math.random()*.3,max:.65})}}
