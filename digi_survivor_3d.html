@@ -71,11 +71,11 @@ for(let i=0;i<34;i++){const a=i/34*Math.PI*2,r=18+(i%3)*.7;const rock=new THREE.
 const mat=(c,rough=.8,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});
 const orange=mat(0xf18a35),cream=mat(0xffd99a),dark=mat(0x26334a),eye=mat(0x17263a,.3),claw=mat(0xf4e8d4),gold=mat(0xffd45e,.35,.15);
 const roster={
-agumon:{name:'아구몬',stage:'성장기',color:0xf18a35,hp:100,speed:6.4,fire:.66,damage:42},
-gabumon:{name:'파피몬',stage:'성장기',color:0x4f8cb8,hp:112,speed:6.1,fire:.78,damage:46},
-patamon:{name:'파닥몬',stage:'성장기',color:0xe9b85d,hp:92,speed:7.2,fire:.72,damage:38},
-biyomon:{name:'피요몬',stage:'성장기',color:0xd65a61,hp:96,speed:6.8,fire:.56,damage:36},
-tentomon:{name:'텐타몬',stage:'성장기',color:0xd8a83e,hp:108,speed:5.9,fire:.88,damage:54}
+agumon:{name:'아구몬',stage:'성장기',color:0xf18a35,hp:100,speed:6.4,fire:.66,damage:20},
+gabumon:{name:'파피몬',stage:'성장기',color:0x4f8cb8,hp:112,speed:6.1,fire:.78,damage:22},
+patamon:{name:'파닥몬',stage:'성장기',color:0xe9b85d,hp:92,speed:7.2,fire:.72,damage:18},
+biyomon:{name:'피요몬',stage:'성장기',color:0xd65a61,hp:96,speed:6.8,fire:.56,damage:17},
+tentomon:{name:'텐타몬',stage:'성장기',color:0xd8a83e,hp:108,speed:5.9,fire:.88,damage:26}
 };
 let selected='agumon';
 function disposeObject(o){if(!o)return;o.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.userData?.ownedTexture)n.userData.ownedTexture.dispose()});if(o.parent)o.parent.remove(o);else scene.remove(o)}
@@ -212,7 +212,7 @@ function makeEnemy(forceBoss=false){
   for(const s of [-1,1]){const wing=new THREE.Mesh(new THREE.ConeGeometry(.82,2.1,4),dark);wing.position.set(s*1.02,1.25,-.18);wing.rotation.z=s*-.9;wing.rotation.x=-.25;wing.scale.set(1,.8,.22);wing.castShadow=true;g.add(wing);cone(g,.12,.72,s*.48,.35,.05,red,0,s*.18)}
   const chest=sphere(g,.22,0,1.15,.49,glow,.8,1.1,.35);
  }
- const hp={grunt:19,runner:14,brute:58,boss:1050}[type]*(1+elapsed*.0015);
+ const hp={grunt:24,runner:17,brute:76,boss:1250}[type]*(1+elapsed*.002);
  g.userData={hp,maxHp:hp,speed:({grunt:1.45+Math.random()*.45,runner:2.55,brute:.82,boss:1.05})[type]+elapsed*.0015,hit:0,body:g.children[0],type,boss,baseMaterial:skin,contact:boss?22:type==='brute'?13:8,name:names[type],attackTimer:2.4+Math.random()*1.2,attackMode:false,knock:0,phase:Math.random()*6.28};
  g.scale.setScalar(type==='boss'?1.12:1);
  return g;
@@ -236,9 +236,9 @@ function spawnOrb(pos,value=1){const o=new THREE.Mesh(new THREE.IcosahedronGeome
 function floatingDamage(pos,value,kind='enemy'){const c=document.createElement('canvas');c.width=256;c.height=128;const x=c.getContext('2d');x.font='bold 68px system-ui, sans-serif';x.textAlign='center';x.lineWidth=10;x.strokeStyle='rgba(20,18,30,.9)';x.fillStyle=kind==='player'?'#ff5268':kind==='boss'?'#ffe16b':'#ffffff';x.strokeText(String(Math.round(value)),128,82);x.fillText(String(Math.round(value)),128,82);const tex=new THREE.CanvasTexture(c);tex.minFilter=THREE.LinearFilter;const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));sprite.userData.ownedTexture=tex;sprite.position.copy(pos);sprite.position.y+=.65;sprite.scale.set(1.35,.68,1);sprite.renderOrder=20;scene.add(sprite);pushEffect({mesh:sprite,vel:new THREE.Vector3(0,1.5,0),life:.85,max:.85,text:true})}
 function hitEnemy(e,damage){if(!e.parent)return;e.userData.hp-=damage;floatingDamage(e.position.clone().add(new THREE.Vector3(0,1.05,0)),damage,e.userData.boss?'boss':'enemy');e.userData.hit=.13;e.userData.body.material=hitMaterial;e.userData.knock=e.userData.boss?.12:.32;const p=e.position.clone().add(new THREE.Vector3(0,.7,0));addBurst(p,0xffc36b,2);if(e.userData.hp<=0){const pos=e.position.clone();addBurst(pos,e.userData.boss?0xff526e:0xffc36b,e.userData.boss?22:9);if(e.userData.boss){$('bossHud').style.display='none';toast('보스 격파! 대량 데이터 획득')}disposeObject(e);const i=enemies.indexOf(e);if(i>=0)enemies.splice(i,1);kills++;spawnOrb(pos,e.userData.boss?18:e.userData.type==='brute'?4:1+Math.floor(Math.random()*2));if(kills%20===0)toast('적 '+kills+'마리 격파!')}}
 function nearest(){let target=null,best=Infinity;for(const e of enemies){const d=e.position.distanceToSquared(player.position);if(d<best){best=d;target=e}}return target}
-function attack(){const target=nearest();if(!target)return;const p=makeProjectile();const colors={agumon:0xff9b3d,gabumon:0x83dfff,patamon:0xffe29a,biyomon:0xff765e,tentomon:0xffe15a};p.material=attackMats[selected];p.position.copy(player.position).add(new THREE.Vector3(0,1.1,0));p.userData={target,life:2,damage:Math.round(damage*(evolved?1.85:1))};shots.push(p)}
+function attack(){const target=nearest();if(!target)return;const p=makeProjectile();const colors={agumon:0xff9b3d,gabumon:0x83dfff,patamon:0xffe29a,biyomon:0xff765e,tentomon:0xffe15a};p.material=attackMats[selected];p.position.copy(player.position).add(new THREE.Vector3(0,1.1,0));p.userData={target,life:2,damage:Math.round(damage*(evolved?1.7:1))};shots.push(p)}
 const upgrades=[
-{name:'화염의 힘',desc:'자동 공격 피해량 +50%',apply:()=>damage*=1.5},
+{name:'화염의 힘',desc:'자동 공격 피해량 +35%',apply:()=>damage*=1.35},
 {name:'강철 데이터',desc:'최대 HP +25, HP 회복',apply:()=>{maxHp+=25;hp=Math.min(maxHp,hp+35)}},
 {name:'가속 부스터',desc:'이동 속도 +18%',apply:()=>speed*=1.18},
 {name:'디지코어 흡수',desc:'경험치 획득 범위 +45%',apply:()=>magnet+=2.2},
