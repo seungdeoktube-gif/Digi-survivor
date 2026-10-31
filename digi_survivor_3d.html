@@ -260,6 +260,18 @@ function makePartner(id){
   for(const side of [-1,1]){const wing=makePivot(side*.48,1.38,-.38,'wing',side);rigPart(wing,.42,.18,.62,lightScale,side*.2,0,-.16);for(let j=0;j<2;j++)rigPart(wing,.14,.1,.38,ivory,side*(.28+j*.12),.04,-.28);const arm=makePivot(side*.48,1.15,.25,'arm',side);rigPart(arm,.16,.5,.16,leg,side*.1,-.22,.02);const legPivot=makePivot(side*.62,.45,0,'leg',side);rigPart(legPivot,.15,.5,.15,leg,side*.05,-.2,0)}
   const horn=makePivot(0,1.95,-.05,'crest',0);rigPart(horn,.12,.55,.12,accent,0,.22,0);
  }
+ 
+ // Sculpted finish: layered anatomy, soft organic forms and species markings.
+ const sm=c=>new THREE.MeshStandardMaterial({color:c,roughness:.55,metalness:.08});
+ const so=(r,x,y,z,m,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,20,16),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;g.add(o);return o};
+ const sp=(x,y,z,sx,sy,sz,m,rz=0)=>{const o=so(1,x,y,z,m,sx,sy,sz);o.rotation.z=rz;return o};
+ const seam=sm(id==='agumon'?0xb85a24:id==='gabumon'?0x263e5e:id==='patamon'?0xb27b3d:id==='biyomon'?0x963746:0x7c2933),hi=sm(id==='agumon'?0xffbd70:id==='gabumon'?0xf4efe1:id==='patamon'?0xffe2a0:id==='biyomon'?0xffa0a2:0xffdf65),ink=sm(0x211d2a),ivoryDetailX=sm(0xfff1d8);
+ if(id==='agumon'){sp(0,1.34,.57,.48,.24,.18,ink);for(const x of [-.15,.15])so(.06,x,1.37,.69,ivoryDetailX,.7,1.5,.55);for(const x of [-.37,.37]){sp(x,1.78,.36,.12,.17,.08,seam,x*.5);sp(x*.6,1.93,.39,.1,.08,.07,hi)}for(let j=0;j<3;j++)for(const x of [-.27,.27])sp(x,.72+j*.13,.43,.07,.035,.025,seam);so(.13,0,.68,-1.42,hi)}
+ else if(id==='gabumon'){sp(0,1.18,-.28,.58,.5,.48,hi);for(const x of [-1,1]){so(.13,x*.47,1.72,-.13,hi,.75,1.3,.7);sp(x*.43,1.32,.46,.09,.25,.06,seam,x*.25);so(.07,x*.28,.22,.26,ivoryDetailX)}for(let i=0;i<5;i++){const x=(i-2)*.2;sp(x,1.28,-.69,.045,.19,.035,seam,x*.7)}sp(0,1.13,.54,.28,.12,.1,ink)}
+ else if(id==='patamon'){sp(0,1.28,.52,.38,.19,.12,ink);for(const x of [-1,1]){sp(x*.96,1.55,-.02,.22,.78,.13,hi,x*.52);sp(x*1.08,1.48,.06,.12,.58,.08,accent,x*.52);so(.13,x*.33,.22,.22,ivoryDetailX,.9,.5,.8)}sp(0,1.87,-.12,.16,.22,.08,hi)}
+ else if(id==='biyomon'){sp(0,1.25,.54,.25,.18,.12,ink);for(const x of [-1,1]){for(let j=0;j<4;j++)sp(x*(.55+j*.1),1.37-j*.1,-.08,.11,.32,.09,hi,-x*(.35+j*.08));sp(x*.24,1.93,-.1,.11,.28,.09,accent);so(.12,x*.28,.2,.2,gold,1,.55,.8)}sp(0,1.49,.65,.18,.22,.16,gold)}
+ else if(id==='tentomon'){sp(0,1.38,-.39,.56,.38,.42,sm(0xc8343d));for(const x of [-1,1]){sp(x*.31,1.42,-.75,.055,.34,.045,ink,x*.18);so(.11,x*.23,1.68,.43,hi,.8,.7,.55);so(.07,x*.23,1.51,.53,ink,.8,.7,.5)}for(const x of [-1,1])for(let j=0;j<3;j++){const xx=x*(.53+j*.08);sp(xx,.58,(j-1)*.28,.075,.29,.07,accent,x*.55);so(.085,xx*1.12,.24,(j-1)*.28,hi,.9,.55,1.2)}sp(0,2.15,-.13,.12,.38,.12,hi)}
+
  g.userData.species=id;g.children.forEach((o,i)=>{o.userData.animBase={x:o.rotation.x,y:o.rotation.y,z:o.rotation.z,phase:i*.83};});return g;
 }
 const player=makePartner(selected);scene.add(player);player.position.y=0;
@@ -297,6 +309,17 @@ function makeEnemy(forceBoss=false){
   for(const s of [-1,1]){const wing=new THREE.Mesh(new THREE.ConeGeometry(.82,2.1,4),dark);wing.position.set(s*1.02,1.25,-.18);wing.rotation.z=s*-.9;wing.rotation.x=-.25;wing.scale.set(1,.8,.22);wing.castShadow=true;g.add(wing);cone(g,.12,.72,s*.48,.35,.05,red,0,s*.18)}
   const chest=sphere(g,.22,0,1.15,.49,glow,.8,1.1,.35);
  }
+ 
+ // Enemy sculpt pass: armor layering, facial planes and signature anatomy.
+ const em=c=>new THREE.MeshStandardMaterial({color:c,roughness:.48,metalness:.18});
+ const eb=(r,x,y,z,m,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,18,14),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;g.add(o);return o};
+ const es=(r,h,x,y,z,m,rz=0)=>{const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,9),m);o.position.set(x,y,z);o.rotation.z=rz;o.castShadow=true;g.add(o);return o};
+ const armor=em(type==='grunt'?0x583b78:type==='runner'?0x477e3e:type==='brute'?0x5c2428:0x29243b),edge=em(type==='grunt'?0xb78ad4:type==='runner'?0xb4d875:type==='brute'?0xd66b43:0x8b718f),black=em(0x201a2b),fang=em(0xffe8cb);
+ if(type==='grunt'){eb(.27,0,.82,.28,black,1,.55,.5);eb(.18,0,.9,.48,red,1,.45,.35);for(const x of [-1,1]){es(.14,.48,x*.28,1.42,.02,armor,x*.28);eb(.11,x*.58,.72,-.12,edge,.7,1.8,.35);es(.055,.36,x*.72,.55,-.13,red,x*.8);eb(.045,x*.17,1.12,.36,fang,.8,1.2,.6)}es(.12,.3,0,.18,.32,fang,Math.PI)}
+ else if(type==='runner'){for(let i=0;i<4;i++)eb(.31,0,.57,-.48+i*.3,i%2?skin:armor,1.2,.72,.78);for(const x of [-1,1]){es(.09,.58,x*.16,1.46,.35,edge,x*.18);eb(.09,x*.16,1.77,.35,glow);es(.08,.24,x*.12,.82,.56,black,x*.4)}for(const x of [-1,1])for(let j=0;j<3;j++){const leg=eb(.07,x*(.38+j*.03),.36,(j-1)*.34,armor,.8,3.1,.8);leg.rotation.z=x*.5;eb(.08,x*(.48+j*.03),.18,(j-1)*.34,edge)}}
+ else if(type==='brute'){eb(.54,0,1.05,-.22,armor,1.12,.75,.9);eb(.42,0,1.47,.12,red,1,.9,.78);for(const x of [-1,1]){es(.2,1.12,x*.27,2.28,-.08,black,x*.22);es(.28,.92,x*.82,1.23,.38,edge,x*.95);es(.13,.55,x*.44,.32,.08,black,x*.25);eb(.1,x*.17,1.58,.48,glow);eb(.18,x*.62,.85,-.2,armor,.8,1.4,.8)}eb(.2,0,.83,.48,black,1.2,.45,.4);for(let i=0;i<3;i++)es(.07,.2,(i-1)*.13,.84,.68,fang,Math.PI)}
+ else{eb(.34,0,1.2,.35,black,.9,1.25,.35);for(let i=0;i<4;i++)eb(.36,0,1.42-i*.16,.36,edge,1.05,.12,.22);eb(.32,0,1.73,.38,skin,.9,1.05,.68);for(const x of [-1,1]){es(.16,.72,x*.34,2.42,-.02,edge,x*.34);eb(.24,x*.72,1.42,-.06,armor,1.5,1,.75);es(.12,.42,x*.92,1.12,.25,fang,x*.55);for(let j=0;j<3;j++){const feather=eb(.14,x*(1.1+j*.18),1.36-j*.22,-.34,black,.65,2.7,.45);feather.rotation.z=-x*(.5+j*.16)}eb(.1,x*.17,1.84,.57,glow,.8,1.1,.45)}eb(.16,0,1.14,.57,glow,.8,1.25,.35)}
+
  const hp={grunt:24,runner:17,brute:76,boss:1250}[type]*(1+elapsed*.002);
  g.userData={hp,maxHp:hp,speed:({grunt:1.45+Math.random()*.45,runner:2.55,brute:.82,boss:1.05})[type]+elapsed*.0015,hit:0,body:g.children[0],type,boss,baseMaterial:skin,contact:boss?22:type==='brute'?13:8,name:names[type],attackTimer:2.4+Math.random()*1.2,attackMode:false,knock:0,phase:Math.random()*6.28};
  g.scale.setScalar(type==='boss'?1.12:1);
