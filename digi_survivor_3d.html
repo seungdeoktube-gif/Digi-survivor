@@ -88,8 +88,31 @@ function makePartner(id){
  if(id==='patamon'){part(g,1,.85,.85,body,0,.86,0);part(g,.82,.65,.75,body,0,1.5,.05);part(g,.62,.26,.3,belly,0,1.23,.43);part(g,.16,.2,.08,eye,-.2,1.62,.39);part(g,.16,.2,.08,eye,.2,1.62,.39);part(g,.26,.85,.22,accent,-.78,1.48,0,0,-.42);part(g,.26,.85,.22,accent,.78,1.48,0,0,.42);part(g,.3,.3,.3,belly,-.34,.28,0);part(g,.3,.3,.3,belly,.34,.28,0)}
  if(id==='biyomon'){part(g,.9,.95,.8,body,0,.9,0);part(g,.75,.65,.7,body,0,1.55,.02);part(g,.55,.22,.28,accent,0,1.32,.42);part(g,.15,.22,.08,eye,-.2,1.65,.36);part(g,.15,.22,.08,eye,.2,1.65,.36);part(g,.22,.75,.2,accent,-.65,1.4,0,0,-.5);part(g,.22,.75,.2,accent,.65,1.4,0,0,.5);part(g,.18,.55,.18,mat(0xffd45e),0,2.02,-.02);part(g,.28,.3,.28,accent,-.3,.28,0);part(g,.28,.3,.28,accent,.3,.28,0)}
  if(id==='tentomon'){part(g,1.15,.85,1.05,body,0,.88,0);part(g,.82,.65,.75,accent,0,1.48,.05);part(g,.45,.3,.3,belly,0,1.15,.43);part(g,.15,.18,.08,eye,-.2,1.58,.39);part(g,.15,.18,.08,eye,.2,1.58,.39);part(g,.18,.45,.18,leg,-.55,.28,.18);part(g,.18,.45,.18,leg,.55,.28,.18);part(g,.18,.45,.18,leg,-.55,.28,-.18);part(g,.18,.45,.18,leg,.55,.28,-.18);part(g,.18,.55,.18,accent,-.22,2.02,-.05,0,-.4);part(g,.18,.55,.18,accent,.22,2.02,-.05,0,.4)}
- // Eyes, feet and a clear species-specific silhouette.
- if(id!=='agumon'){part(g,.3,.12,.2,claw,-.32,.12,.12);part(g,.3,.12,.2,claw,.32,.12,.12)}
+ // Rounded facial details and signature anatomy improve recognition at gameplay scale.
+ const orb=(r,x,y,z,m,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(new THREE.SphereGeometry(r,14,12),m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;g.add(o);return o};
+ const ivory=mat(0xfff2d8),pupil=mat(0x17243b,.25),shine=mat(0xffffff,.2);
+ const eyeY=id==='agumon'?1.77:id==='gabumon'?1.63:id==='patamon'?1.62:id==='biyomon'?1.65:1.58;
+ const eyeZ=id==='agumon'?.405:id==='gabumon'?.465:id==='patamon'?.435:id==='biyomon'?.405:.435;
+ for(const s of [-1,1]){orb(.125,s*.22,eyeY,eyeZ,ivory,1,.95,.55);orb(.072,s*.22,eyeY-.005,eyeZ+.052,pupil,1,1,.65);orb(.025,s*.22-.018,eyeY+.035,eyeZ+.09,shine,.8,.8,.6)}
+ if(id==='agumon'){
+  const tail=part(g,.28,.3,1.12,body,-.08,.72,-.82,.18,-.08);tail.geometry.dispose();tail.geometry=new THREE.ConeGeometry(.25,1.2,7);tail.rotation.x=Math.PI/2+.12;tail.position.set(-.08,.68,-.92);
+  orb(.16,-.08,1.36,.43,mat(0xf5c18b),1,.5,.55);
+  for(const s of [-1,1]){part(g,.16,.18,.22,claw,s*.36,.18,.2);part(g,.13,.12,.22,ivory,s*.36,.1,.29)}
+ }else if(id==='gabumon'){
+  const pelt=new THREE.Mesh(new THREE.SphereGeometry(.72,14,12),mat(0xe9e5d7));pelt.position.set(0,1.18,-.27);pelt.scale.set(1.02,.9,.78);pelt.castShadow=true;g.add(pelt);
+  for(const s of [-1,1]){part(g,.18,.3,.16,accent,s*.43,1.83,-.03,0,s*.22);part(g,.13,.16,.18,claw,s*.32,.18,.22)}
+  part(g,.22,.18,.48,accent,0,.7,-.83,.2,0);
+ }else if(id==='patamon'){
+  const earMat=mat(0xd59b4b);for(const s of [-1,1]){const ear=part(g,.22,.72,.18,earMat,s*.9,1.52,-.02,0,s*.58);ear.scale.set(1.05,1.05,1.1);orb(.16,s*.34,.28,.18,claw,.9,.5,.8)}
+  orb(.12,0,1.27,.52,mat(0xc98a45),1,.65,.55);
+ }else if(id==='biyomon'){
+  const beak=new THREE.Mesh(new THREE.ConeGeometry(.22,.42,6),gold);beak.position.set(0,1.39,.53);beak.rotation.x=Math.PI/2;beak.castShadow=true;g.add(beak);
+  for(const s of [-1,1]){part(g,.16,.22,.16,claw,s*.32,.17,.12);part(g,.12,.42,.14,mat(0xffd45e),s*.18,2.12,-.02,0,s*.3)}
+ }else if(id==='tentomon'){
+  const shell=new THREE.Mesh(new THREE.SphereGeometry(.62,16,12),mat(0xc83e42,.5,.12));shell.position.set(0,1.28,-.36);shell.scale.set(1.08,.78,.78);shell.castShadow=true;g.add(shell);
+  part(g,.1,.75,.1,mat(0x30384b),0,1.6,-.91);
+  for(const s of [-1,1]){part(g,.14,.52,.14,leg,s*.62,.62,.12,0,s*.42);part(g,.14,.52,.14,leg,s*.62,.62,-.36,0,s*.42)}
+ }
  g.userData.species=id;g.children.forEach((o,i)=>{o.userData.animBase={x:o.rotation.x,y:o.rotation.y,z:o.rotation.z,phase:i*.83};});return g;
 }
 const player=makePartner(selected);scene.add(player);player.position.y=0;
