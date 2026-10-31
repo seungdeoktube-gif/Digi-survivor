@@ -66,6 +66,58 @@ scene.add(new THREE.HemisphereLight(0xa9d8ff,0x253321,2.1));
 const sun=new THREE.DirectionalLight(0xffe6bd,2.4);sun.position.set(-8,18,10);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(180,180),new THREE.MeshStandardMaterial({color:0x263d38,roughness:1}));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
 const grid=new THREE.GridHelper(180,90,0x52766b,0x38534d);grid.position.y=.012;grid.material.transparent=true;grid.material.opacity=.22;scene.add(grid);
+
+const stageScenery=new THREE.Group();scene.add(stageScenery);
+const stageDefs=[
+ {name:'숲',sky:0x9abf91,fog:0x9abf91,ground:0x35543a,gridA:0x75936a,gridB:0x4d6c4b,hemi:0xc8e8c0,sun:0xffe6bd,props:'forest'},
+ {name:'바닷가',sky:0x83c9df,fog:0x83c9df,ground:0xcbb77d,gridA:0x8fc6c9,gridB:0x6caaa9,hemi:0xc8efff,sun:0xfff0cf,props:'beach'},
+ {name:'습지',sky:0x596f68,fog:0x596f68,ground:0x394a3d,gridA:0x718477,gridB:0x52685b,hemi:0xb5c8b5,sun:0xc8d9b4,props:'swamp'},
+ {name:'사막',sky:0xe7b978,fog:0xe7b978,ground:0xc99b5e,gridA:0xe5c48c,gridB:0xb88a54,hemi:0xffe4b5,sun:0xffd38b,props:'desert'}
+];
+let currentStage=-1;
+function addStageProp(type,x,z,scale=1){
+ const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(scale);stageScenery.add(g);
+ const mesh=(geo,material,px,py,pz,sx=1,sy=1,sz=1)=>{const o=new THREE.Mesh(geo,material);o.position.set(px,py,pz);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;g.add(o);return o};
+ if(type==='forest'){
+  const trunk=mat(0x62452f),leaf=mat(0x2f7045),leaf2=mat(0x478a50);
+  mesh(new THREE.CylinderGeometry(.16,.25,2.4,7),trunk,0,1.2,0);
+  mesh(new THREE.ConeGeometry(1.05,2.2,7),leaf,0,2.65,0,1,1,1);
+  mesh(new THREE.ConeGeometry(.78,1.7,7),leaf2,0,3.35,0);
+ }else if(type==='beach'){
+  const trunk=mat(0x8a623b),frond=mat(0x2e8c67);
+  const t=mesh(new THREE.CylinderGeometry(.1,.17,3.2,7),trunk,0,1.6,0);t.rotation.z=-.13;
+  for(let i=0;i<6;i++){const a=i*Math.PI/3;const leaf=mesh(new THREE.ConeGeometry(.22,2.2,5),frond,Math.cos(a)*.78,3.1+Math.sin(a)*.12,Math.sin(a)*.78);leaf.rotation.z=-Math.cos(a)*.72;leaf.rotation.x=Math.sin(a)*.72}
+ }else if(type==='swamp'){
+  const wood=mat(0x4b4937),reed=mat(0x6f8150),water=mat(0x425d54,.28,.12);
+  mesh(new THREE.CylinderGeometry(.09,.14,2.1,6),wood,0,1.05,0).rotation.z=.65;
+  for(let i=0;i<5;i++){const a=i*1.25;mesh(new THREE.CylinderGeometry(.025,.07,1.7+(i%2)*.5,5),reed,Math.cos(a)*.45,.85,Math.sin(a)*.45).rotation.z=Math.cos(a)*.18}
+  mesh(new THREE.CylinderGeometry(.8,.8,.035,12),water,0,.04,0,1,.3,1);
+ }else{
+  const cactus=mat(0x3e754b),sandstone=mat(0x9d7045);
+  mesh(new THREE.CylinderGeometry(.22,.28,2.1,8),cactus,0,1.05,0);
+  mesh(new THREE.CylinderGeometry(.12,.16,.9,7),cactus,-.38,1.05,0).rotation.z=-.9;
+  mesh(new THREE.CylinderGeometry(.12,.16,.75,7),cactus,.38,1.35,0).rotation.z=.9;
+  mesh(new THREE.DodecahedronGeometry(.65,0),sandstone,.85,.3,.25,1.2,.7,.8);
+ }
+}
+function setStage(index,announce=false){
+ index=Math.max(0,Math.min(stageDefs.length-1,index));
+ if(index===currentStage)return;
+ currentStage=index;const d=stageDefs[index];
+ scene.background.setHex(d.sky);scene.fog.color.setHex(d.fog);scene.fog.near=22;scene.fog.far=index===2?52:78;
+ floor.material.color.setHex(d.ground);grid.material[0].color.setHex(d.gridA);grid.material[1].color.setHex(d.gridB);
+ scene.children.forEach(o=>{if(o.isHemisphereLight)o.color.setHex(d.hemi)});
+ sun.color.setHex(d.sun);
+ while(stageScenery.children.length){const o=stageScenery.children[0];o.traverse(n=>{if(n.geometry)n.geometry.dispose()});stageScenery.remove(o)}
+ // Procedural scenery is distributed throughout the arena, not in the combat path alone.
+ let seed=9281+index*7919;const rand=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646};
+ for(let i=0;i<58;i++){const a=rand()*Math.PI*2,r=12+rand()*55;addStageProp(d.props,Math.cos(a)*r,Math.sin(a)*r,.72+rand()*.65)}
+ // A subtle shoreline/water band gives the beach a readable horizon.
+ if(index===1){const sea=new THREE.Mesh(new THREE.CircleGeometry(105,64),mat(0x287eaa,.3,.12));sea.rotation.x=-Math.PI/2;sea.position.y=-.18;stageScenery.add(sea)}
+ if(announce)toast('STAGE '+(index+1)+' · '+d.name);
+}
+function updateStage(){setStage(Math.floor(elapsed/90),true)}
+
 const arena=new THREE.Group();scene.add(arena);
 for(let i=0;i<34;i++){const a=i/34*Math.PI*2,r=18+(i%3)*.7;const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.45+(i%4)*.16,0),new THREE.MeshStandardMaterial({color:i%2?0x435e54:0x536b61,roughness:1}));rock.position.set(Math.cos(a)*r,.25,Math.sin(a)*r);rock.castShadow=true;arena.add(rock)}
 const mat=(c,rough=.8,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});
@@ -281,7 +333,7 @@ function evolve(){
  $('nameLine').textContent=evoName+' · 성숙기';
 }
 function collect(dt){for(let i=orbs.length-1;i>=0;i--){const o=orbs[i];o.userData.life-=dt;const target=player.position.clone().add(new THREE.Vector3(0,.5,0)),d=o.position.distanceTo(target);if(d<magnet+2)o.position.lerp(player.position.clone().add(new THREE.Vector3(0,.6,0)),Math.min(1,dt*7));if(d<1.15){xp+=o.userData.value;disposeObject(o);orbs.splice(i,1);if(xp>=xpNeed){xp-=xpNeed;level++;xpNeed=Math.floor(xpNeed*1.32+4);if(level>=5)evolve();levelUp();break}}else if(o.userData.life<=0){disposeObject(o);orbs.splice(i,1)}}}
-function update(dt){elapsed+=dt;invuln=Math.max(0,invuln-dt);attackTimer-=dt;spawnTimer-=dt;
+function update(dt){elapsed+=dt;updateStage();invuln=Math.max(0,invuln-dt);attackTimer-=dt;spawnTimer-=dt;
 if(spawnTimer<=0){addEnemy();spawnTimer=Math.max(.16,.95-elapsed*.004)}
 if(elapsed>=75&&Math.floor(elapsed/75)>Math.floor((elapsed-dt)/75)&&!enemies.some(e=>e.userData.boss))addEnemy(true);
 const v=new THREE.Vector3(move.x,0,move.y);if(v.lengthSq()>1)v.normalize();player.position.addScaledVector(v,speed*dt);player.position.y=0;
@@ -300,7 +352,7 @@ $('timer').textContent=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String
 $('hpLabel').textContent='HP '+Math.max(0,Math.ceil(hp))+' / '+maxHp;$('hpFill').style.width=Math.max(0,hp/maxHp*100)+'%';$('killLabel').textContent='처치 '+kills;$('levelLabel').textContent='Lv. '+level+' · 공격력 '+Math.round(damage)+' · '+(evolved?'성숙기':'성장기');$('xpLabel').textContent=xp+' / '+xpNeed;$('xpFill').style.width=xp/xpNeed*100+'%';$('ultimate').textContent='필살기\n'+Math.floor(ultimate)+'%';$('ultimate').disabled=ultimate<100;
 }
 function endRun(){running=false;paused=false;$('report').textContent='생존 시간 '+$('timer').textContent+' · 처치 '+kills+' · 도달 레벨 '+level+ (evolved?' · 진화 성공':'');$('ended').classList.remove('hidden')}
-function reset(){running=true;paused=false;for(const arr of [enemies,shots,enemyShots,orbs,effects])for(const item of arr)disposeObject(item.mesh||item);enemies.length=shots.length=enemyShots.length=orbs.length=effects.length=0;const cfg=roster[selected];for(const child of player.children.slice())disposeObject(child);const replacement=makePartner(selected);replacement.children.slice().forEach(o=>player.add(o));player.userData.species=selected;player.position.set(0,0,0);player.rotation.set(0,0,0);player.scale.setScalar(1);hp=maxHp=cfg.hp;xp=0;xpNeed=10;level=1;kills=0;elapsed=0;ultimate=0;evolved=false;damage=cfg.damage;speed=cfg.speed;magnet=2.6;fireRate=cfg.fire;attackTimer=0;spawnTimer=.4;invuln=0;player.visible=true;scene.add(player);$('nameLine').textContent=cfg.name+' · '+cfg.stage;$('ended').classList.add('hidden');$('bossHud').style.display='none';$('start').classList.add('hidden');$('paused').classList.add('hidden');$('levelUp').classList.add('hidden');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
+function reset(){running=true;paused=false;for(const arr of [enemies,shots,enemyShots,orbs,effects])for(const item of arr)disposeObject(item.mesh||item);enemies.length=shots.length=enemyShots.length=orbs.length=effects.length=0;const cfg=roster[selected];for(const child of player.children.slice())disposeObject(child);const replacement=makePartner(selected);replacement.children.slice().forEach(o=>player.add(o));player.userData.species=selected;player.position.set(0,0,0);player.rotation.set(0,0,0);player.scale.setScalar(1);hp=maxHp=cfg.hp;xp=0;xpNeed=10;level=1;kills=0;elapsed=0;setStage(0,false);ultimate=0;evolved=false;damage=cfg.damage;speed=cfg.speed;magnet=2.6;fireRate=cfg.fire;attackTimer=0;spawnTimer=.4;invuln=0;player.visible=true;scene.add(player);$('nameLine').textContent=cfg.name+' · '+cfg.stage;$('ended').classList.add('hidden');$('bossHud').style.display='none';$('start').classList.add('hidden');$('paused').classList.add('hidden');$('levelUp').classList.add('hidden');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
 function loop(now){if(!running)return;const dt=Math.min(.04,(now-last)/1000||0);last=now;if(!paused)update(dt);renderer.render(scene,camera);if(running)raf=requestAnimationFrame(loop)}
 document.querySelectorAll('.rosterCard').forEach(btn=>btn.addEventListener('click',()=>{selected=btn.dataset.digi;document.querySelectorAll('.rosterCard').forEach(x=>x.classList.toggle('selected',x===btn))}));
 $('startBtn').onclick=reset;$('retryBtn').onclick=reset;$('pause').onclick=()=>{if(!running)return;paused=true;$('paused').classList.remove('hidden')};$('resumeBtn').onclick=()=>{$('paused').classList.add('hidden');paused=false;last=performance.now()};
